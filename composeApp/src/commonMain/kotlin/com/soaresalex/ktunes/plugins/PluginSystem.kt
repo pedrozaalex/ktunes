@@ -1,139 +1,138 @@
 package com.soaresalex.ktunes.plugins
 
+import com.soaresalex.ktunes.config.PluginsConfig
+import com.soaresalex.ktunes.data.GitHubClient
+import com.soaresalex.ktunes.viewmodels.AudioPlaybackService
 import io.github.classgraph.ClassGraph
-import io.github.classgraph.ClassInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.net.URI
 import java.net.URL
 import java.net.URLClassLoader
 import java.security.MessageDigest
+import kotlin.reflect.KClass
 import kotlin.reflect.full.createInstance
 
 /**
- * Represents a downloadable and loadable plugin
+ * Sealed interface for defining plugin types with type-safe contracts
  */
-data class PluginDescriptor(
-    val id: String,
-    val name: String,
-    val version: String,
-    val downloadUrl: String,
-    val checksum: String,
-    val pluginType: PluginType
-)
+sealed interface KTunesPlugin {
+    val id: String
+    val name: String
+    val version: String
+}
 
 /**
- * Enum to categorize different types of plugins
+ * Sealed interface for specific plugin types with type-safe contracts
  */
-enum class PluginType {
-    AUDIO_SERVICE,
+sealed interface TypedPlugin<T> : KTunesPlugin {
+    fun getInstance(): T
+}
+
+/**
+ * Audio Service Plugin with type-safe contract
+ */
+interface AudioServicePlugin : TypedPlugin<AudioPlaybackService> {
+    override fun getInstance(): AudioPlaybackService
+}
+
+/**
+ * Represents a downloadable and loadable plugin with type-safe properties
+ */
+data class PluginDescriptor<P : KTunesPlugin>(
+    override val id: String,
+    override val name: String,
+    override val version: String,
+    val pluginClass: KClass<P>,
+    val jarFileUrl: URL,
+    val checksumUrl: URL
+) : KTunesPlugin
+
+/**
+ * Sealed class to represent plugin types with type-safe contracts
+ */
+sealed class PluginType<P : KTunesPlugin>(
+    val displayName: String, val pluginClass: KClass<P>
+) {
+    /**
+     * Audio Service Plugin Type
+     */
+    object AudioService : PluginType<AudioServicePlugin>(
+        displayName = "Audio Service", pluginClass = AudioServicePlugin::class
+    )
+
+    companion object {
+        /**
+         * Get all available plugin types
+         */
+        fun getAllTypes(): List<PluginType<*>> = listOf(AudioService)
+    }
 }
 
 /**
  * Manages the entire lifecycle of plugin discovery, download, validation, and loading
  */
-class PluginManager(
-    private val pluginDirectory: File,
-    private val pluginRegistries: Map<PluginType, Any> // Maps plugin types to their respective registries
+class PluginManager<P : KTunesPlugin>(
+    private val pluginsDirectory: File, private val pluginRegistry: PluginRegistry<P>
 ) {
     // Ensure plugin directory exists
     init {
-        pluginDirectory.mkdirs()
+        pluginsDirectory.mkdirs()
     }
 
     /**
      * Plugin download and verification process
      */
-    suspend fun downloadPlugin(descriptor: PluginDescriptor): File {
+    suspend fun downloadPlugin(descriptor: PluginDescriptor<P>): File {
         return withContext(Dispatchers.IO) {
             // Create unique filename
-            val fileName = "${descriptor.id}-${descriptor.version}.jar"
-            val destinationFile = File(pluginDirectory, fileName)
+            val dir = File(pluginsDirectory, descriptor.id)
+            dir.mkdirs()
+
+            val jarFile = File(dir, "${descriptor.name}-${descriptor.version}.jar")
 
             // Download the plugin
-            URL(descriptor.downloadUrl).openStream().use { input ->
-                destinationFile.outputStream().use { output ->
+            descriptor.jarFileUrl.openStream().use { input ->
+                jarFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+
+            // Download the checksum file
+            val checksumFile = File(dir, "${descriptor.name}-${descriptor.version}.sha256")
+
+            descriptor.checksumUrl.openStream().use { input ->
+                checksumFile.outputStream().use { output ->
                     input.copyTo(output)
                 }
             }
 
             // Verify checksum
-            val downloadedFileChecksum = calculateFileChecksum(destinationFile)
-            if (downloadedFileChecksum != descriptor.checksum) {
-                destinationFile.delete()
+            if (calculateFileChecksum(jarFile) != checksumFile.readText()) {
+                jarFile.delete()
+                checksumFile.delete()
                 throw SecurityException("Plugin checksum verification failed")
             }
 
-            destinationFile
+            jarFile
         }
     }
 
     /**
-     * Load and validate a plugin JAR
+     * Load and validate a plugin JAR with strict type checking
      */
-    fun loadPlugin(pluginFile: File, expectedType: PluginType): Any {
-        return ClassGraph()
-            .enableClassInfo()
-            .overrideClassLoaders(URLClassLoader(arrayOf(pluginFile.toURI().toURL())))
-            .scan()
-            .use { scanResult ->
+    fun loadPlugin(pluginFile: File, pluginType: PluginType<P>): P {
+        return ClassGraph().enableClassInfo().overrideClassLoaders(URLClassLoader(arrayOf(pluginFile.toURI().toURL())))
+            .scan().use { scanResult ->
                 // Find all classes that implement the appropriate interface based on plugin type
-                val pluginClasses = when (expectedType) {
-                    PluginType.AUDIO_SERVICE ->
-                        scanResult.getClassesImplementing(AudioServicePlugin::class.java.name)
-                }
+                val pluginClasses = scanResult.getClassesImplementing(pluginType.pluginClass.java.name)
 
                 // Instantiate and validate the first found plugin
-                pluginClasses.loadClasses().firstOrNull()?.let { pluginClass ->
-                    val pluginInstance = pluginClass.kotlin.createInstance()
-
-                    // Additional runtime validation
-                    validatePlugin(pluginInstance, expectedType)
-
-                    pluginInstance
-                } ?: throw IllegalArgumentException("No valid plugin found in the JAR")
+                pluginClasses.loadClasses().firstOrNull { pluginType.pluginClass.java.isAssignableFrom(it) }
+                    ?.let { it.kotlin.createInstance() as P }
+                    ?: throw IllegalArgumentException("No valid ${pluginType.displayName} plugin found in the JAR")
             }
-    }
-
-    /**
-     * Validate plugin instance against expected type
-     * @param plugin The plugin instance to validate
-     * @param expectedType The expected plugin type
-     * @throws IllegalArgumentException if the plugin does not match the expected type
-     */
-    private fun validatePlugin(plugin: Any, expectedType: PluginType) {
-        val pluginTypeMap = mapOf(
-            PluginType.AUDIO_SERVICE to AudioServicePlugin::class,
-            // Add more plugin type mappings as needed
-        )
-
-        val expectedKotlinType = pluginTypeMap[expectedType]
-            ?: throw IllegalArgumentException("Unsupported plugin type: $expectedType")
-
-        // Use ClassGraph to perform comprehensive type checking
-        ClassGraph()
-            .enableClassInfo()
-            .scan().use { scanResult ->
-                // Check if the plugin is an instance of the expected type
-                val isValidType = scanResult.getClassInfo(plugin::class.java.name)?.let { classInfo ->
-                    isAssignableFrom(classInfo, expectedKotlinType.java)
-                } ?: false
-
-                require(isValidType) {
-                    "Plugin of type ${plugin::class.simpleName} does not match the expected type ${expectedKotlinType.simpleName}"
-                }
-            }
-    }
-
-    /**
-     * Check if a ClassInfo is assignable from a target class
-     */
-    private fun isAssignableFrom(sourceClassInfo: ClassInfo, targetClass: Class<*>): Boolean {
-        // Check direct assignability
-        if (sourceClassInfo.name == targetClass.name) return true
-
-        // Check inheritance hierarchy
-        return sourceClassInfo.superclasses.any { isAssignableFrom(it, targetClass) }
     }
 
     /**
@@ -153,68 +152,61 @@ class PluginManager(
     }
 
     /**
-     * Centralized plugin registry for discovering and managing plugins
+     * Type-safe plugin registry
      */
-    class PluginRegistry<T>(private val pluginType: PluginType) {
-        private val registeredPlugins = mutableMapOf<String, T>()
+    class PluginRegistry<P : KTunesPlugin> {
+        private val registeredPlugins = mutableMapOf<String, P>()
 
-        fun registerPlugin(plugin: T) {
-            val pluginId = when (plugin) {
-                is AudioServicePlugin -> plugin.id
-                else -> throw IllegalArgumentException("Unknown plugin type")
-            }
-            registeredPlugins[pluginId] = plugin
+        fun registerPlugin(plugin: P) {
+            registeredPlugins[plugin.id] = plugin
         }
 
-        fun getPlugin(id: String): T {
-            return registeredPlugins[id]
-                ?: throw NoSuchElementException("Plugin not found: $id")
+        fun getPlugin(id: String): P {
+            return registeredPlugins[id] ?: throw NoSuchElementException("Plugin not found: $id")
         }
 
-        fun getAllPlugins(): List<T> = registeredPlugins.values.toList()
+        fun getAllPlugins(): List<P> = registeredPlugins.values.toList()
     }
 
     /**
-     * Plugin marketplace for discovering and downloading plugins
+     * Plugin marketplace with type-safe plugin discovery and installation
      */
-    class PluginMarketplace(
+    class PluginMarketplace<P : KTunesPlugin>(
         private val marketplaceUrl: String,
-        private val pluginManager: PluginManager
+        private val pluginManager: PluginManager<P>,
+        private val pluginType: PluginType<P>
     ) {
-        suspend fun fetchAvailablePlugins(type: PluginType): List<PluginDescriptor> {
-            // In a real implementation, this would call an actual API
-            // This is a mock implementation
-            return listOf(
-                PluginDescriptor(
-                    id = "spotify-advanced",
-                    name = "Advanced Spotify Plugin",
-                    version = "1.0.0",
-                    downloadUrl = "https://example.com/spotify-plugin.jar",
-                    checksum = "1234567890abcdef",
-                    pluginType = PluginType.AUDIO_SERVICE
+        fun fetchAvailablePlugins(): List<PluginDescriptor<P>> = GitHubClient.searchRepositoriesByTopic(
+            when (pluginType) {
+                PluginType.AudioService -> PluginsConfig.Sources.GitHub.Topics.AUDIO
+            }
+        ).map { repo ->
+            val latestRelease = repo.latestRelease
+            val assets = latestRelease.assets
+            val jarFileUrl = URI(
+                assets.firstOrNull { repo.name.endsWith(".jar") }?.browserDownloadUrl ?: throw IllegalArgumentException(
+                    "No JAR file found in release assets"
                 )
+            ).toURL()
+            var checksumUrl = URI(
+                assets.firstOrNull { repo.name == PluginsConfig.Sources.GitHub.SHA256_CHECKSUM_FILENAME }?.browserDownloadUrl
+                    ?: throw IllegalArgumentException("No checksum file found in release assets")
+            ).toURL()
+
+            PluginDescriptor(
+                id = repo.id.toString(),
+                name = repo.name,
+                version = latestRelease.tagName,
+                pluginClass = pluginType.pluginClass,
+                jarFileUrl = jarFileUrl,
+                checksumUrl = checksumUrl
             )
         }
 
-        suspend fun installPlugin(descriptor: PluginDescriptor) {
+        suspend fun installPlugin(descriptor: PluginDescriptor<P>) {
             val pluginFile = pluginManager.downloadPlugin(descriptor)
-            val plugin = pluginManager.loadPlugin(pluginFile, descriptor.pluginType)
-
-            // Register plugin in appropriate registry
-            when (descriptor.pluginType) {
-                PluginType.AUDIO_SERVICE ->
-                    (pluginManager.pluginRegistries[PluginType.AUDIO_SERVICE] as PluginRegistry<AudioServicePlugin>)
-                        .registerPlugin(plugin as AudioServicePlugin)
-                // Add other plugin type registrations as needed
-                else -> {} // Handle other plugin types
-            }
+            val plugin = pluginManager.loadPlugin(pluginFile, pluginType)
+            pluginManager.pluginRegistry.registerPlugin(plugin)
         }
     }
-}
-
-// Plugin interfaces (placeholders for existing interfaces)
-interface AudioServicePlugin {
-    val id: String
-    val name: String
-    fun createPlaybackService(): Any // Replace 'Any' with actual service type
 }

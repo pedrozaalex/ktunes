@@ -48,7 +48,8 @@ kotlin {
             implementation(libs.lifecycle.viewmodel.compose)
             implementation(libs.github.api)
             implementation(libs.jgit)
-            implementation(libs.classgraph)
+            implementation(libs.pf4j)
+            implementation(libs.pf4j.update)
         }
 
         commonTest.dependencies {

@@ -17,7 +17,6 @@ buildConfig = "5.4.0"
 composeIcons = "1.1.1"
 github-api = "1.116"
 jgit = "7.0.0.202409031743-r"
-classgraph = "4.8.179"
 lifecycle-viewmodel-compose = "2.8.2"
 
 [libraries]
@@ -75,7 +74,8 @@ composeIcons-featherIcons = { module = "br.com.devsrsouza.compose.icons:feather"
 github-api = { module = "org.kohsuke:github-api", version.ref = "github-api" }
 jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version.ref = "jgit" }
 
-classgraph = { module = "io.github.classgraph:classgraph", version.ref = "classgraph" }
+pf4j = { module = "org.pf4j:pf4j", version = "3.8.0" }
+pf4j-update = { module = "org.pf4j:pf4j-update", version = "2.3.0" }
 
 [plugins]
 
