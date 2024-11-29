@@ -36,7 +36,7 @@ kotlin {
             implementation(libs.coil)
             implementation(libs.coil.network.ktor)
             implementation(libs.multiplatformSettings)
-            implementation("com.russhwolf:multiplatform-settings-no-arg:1.2.0")
+            implementation(libs.multiplatformSettings.serialization)
             implementation(libs.kotlinx.datetime)
             implementation(libs.kstore)
             implementation(libs.composeIcons.featherIcons)
@@ -45,6 +45,9 @@ kotlin {
             implementation(libs.voyager.tab.navigator)
             implementation(libs.voyager.transitions)
             implementation(libs.voyager.koin)
+            implementation(libs.github.api)
+            implementation(libs.jgit)
+            implementation(libs.classgraph)
         }
 
         commonTest.dependencies {
