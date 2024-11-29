@@ -10,6 +10,7 @@ import java.net.URL
 import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
 import org.koin.core.component.KoinComponent
+import java.net.URI
 
 /**
  * Manages plugin discovery, loading, and lifecycle
@@ -90,7 +91,7 @@ class PluginManager(
 
                     // Download JAR if not already exists
                     if (!destinationFile.exists()) {
-                        URL(asset.browserDownloadUrl).openStream().use { input ->
+                        URI(asset.browserDownloadUrl).toURL().openStream().use { input ->
                             Files.copy(input, destinationFile.toPath())
                         }
                     }

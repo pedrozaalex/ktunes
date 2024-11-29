@@ -45,6 +45,7 @@ kotlin {
             implementation(libs.voyager.tab.navigator)
             implementation(libs.voyager.transitions)
             implementation(libs.voyager.koin)
+            implementation(libs.lifecycle.viewmodel.compose)
             implementation(libs.github.api)
             implementation(libs.jgit)
             implementation(libs.classgraph)

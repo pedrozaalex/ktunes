@@ -1,4 +1,4 @@
-package com.soaresalex.ktunes.app.config
+package com.soaresalex.ktunes.config
 
 import com.soaresalex.ktunes.BuildConfig
 

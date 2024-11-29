@@ -2,7 +2,7 @@ package com.soaresalex.ktunes.data
 
 import co.touchlab.kermit.Logger
 import com.russhwolf.settings.Settings
-import com.soaresalex.ktunes.app.config.SpotifyConfig
+import com.soaresalex.ktunes.config.SpotifyConfig
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.okhttp.*

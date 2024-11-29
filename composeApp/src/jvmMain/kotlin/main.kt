@@ -5,8 +5,8 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import java.awt.Dimension
-import com.soaresalex.ktunes.App
-import com.soaresalex.ktunes.initialize
+import com.soaresalex.ktunes.app.App
+import com.soaresalex.ktunes.app.initialize
 
 fun main() = application {
     Window(

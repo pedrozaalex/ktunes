@@ -1,4 +1,4 @@
-package com.soaresalex.ktunes
+package com.soaresalex.ktunes.app
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,11 +17,11 @@ import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
-import cafe.adriel.voyager.navigator.Navigator
+import cafe.adriel.voyager.navigator.tab.CurrentTab
+import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabNavigator
 import cafe.adriel.voyager.navigator.tab.TabOptions
-import cafe.adriel.voyager.transitions.SlideTransition
 import co.touchlab.kermit.Logger
 import coil3.ImageLoader
 import coil3.compose.AsyncImage
@@ -29,7 +29,6 @@ import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.russhwolf.settings.Settings
-import com.soaresalex.ktunes.PlaybackScreen
 import com.soaresalex.ktunes.data.*
 import com.soaresalex.ktunes.plugins.AudioSourcePlugin
 import com.soaresalex.ktunes.plugins.ConfigOptionType
@@ -42,7 +41,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
 import org.koin.compose.getKoin
 import org.koin.core.component.KoinComponent
 import org.koin.core.context.startKoin
@@ -77,7 +75,6 @@ class AuthenticationFlow(
     }
 
     private fun checkAuthenticationStatus() {
-        // Use the existing method in SpotifyAuthClient to check authentication
         _authState.update {
             if (spotifyAuth.isAuthenticated()) {
                 AuthState.Authenticated
@@ -729,52 +726,67 @@ fun PluginManagementScreen() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RowScope.TabItem(tab: Tab) {
+    val navigator = LocalTabNavigator.current
+
+    NavigationBarItem(
+        selected = navigator.current == tab,
+        onClick = { navigator.current = tab },
+        label = {
+            Text(
+                text = tab.options.title
+            )
+        },
+        icon = {
+            tab.options.icon?.let {
+                Icon(
+                    painter = it,
+                    contentDescription = tab.options.title,
+                )
+            }
+        }
+    )
+}
+
 @Composable
 fun App() {
-    val authFlow: AuthenticationFlow = getKoin().get()
-    val authState by authFlow.authState.collectAsState()
-
     AppTheme {
-//        Navigator(screen = LoadingScreen) { navigator ->
-//            // Observe authentication state and navigate accordingly
-//            LaunchedEffect(authState) {
-//                when (authState) {
-//                    is AuthenticationFlow.AuthState.Checking ->
-//                        navigator.replaceAll(LoadingScreen)
-//
-//                    is AuthenticationFlow.AuthState.Unauthenticated ->
-//                        navigator.replaceAll(UnauthenticatedScreen)
-//
-//                    is AuthenticationFlow.AuthState.AuthorizationInProgress ->
-//                        navigator.push(AuthorizationProgressScreen)
-//
-//                    is AuthenticationFlow.AuthState.Authenticated ->
-//                        navigator.replaceAll(TabNavigator(PlaybackTab))
-//
-//                    is AuthenticationFlow.AuthState.Error ->
-//                        navigator.replaceAll(UnauthenticatedScreen)
+        TabNavigator(LibraryTab) {
+//            Scaffold(
+//                topBar = {
+//                    TopAppBar(
+//                        title = { },
+//                        actions = { ThemeToggleButton() }
+//                    )
+//                },
+//                content = { CurrentTab() },
+//                bottomBar = {
+//                    PrimaryTabRow(selectedTabIndex = 1)
+//                    {
+//                        PlaybackTab
+//                        LibraryTab
+//                        PluginManagementTab
+//                    }
 //                }
-//            }
-//
-//            SlideTransition(navigator)
-//        }
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text("KTunes") },
-                    actions = { ThemeToggleButton() }
-                )
-            },
-        ) {
-            // Observe authentication state and navigate accordingly
-            when (authState) {
-                is AuthenticationFlow.AuthState.Checking -> LoadingScreen.Content()
-                is AuthenticationFlow.AuthState.Unauthenticated -> UnauthenticatedScreen.Content()
-                is AuthenticationFlow.AuthState.AuthorizationInProgress -> AuthorizationProgressScreen.Content()
-                is AuthenticationFlow.AuthState.Authenticated -> PlaybackTab.Content()
-                is AuthenticationFlow.AuthState.Error -> UnauthenticatedScreen.Content()
-            }
+//            )
+            Scaffold(
+                content = { paddingValues ->
+                    Column(
+                        modifier = Modifier.padding(paddingValues)
+                    ) {
+                        CurrentTab()
+                    }
+                },
+                bottomBar = {
+                    NavigationBar()
+                    {
+                        TabItem(PlaybackTab)
+                        TabItem(LibraryTab)
+                        TabItem(PluginManagementTab)
+                    }
+                }
+            )
         }
     }
 }
@@ -891,6 +903,7 @@ val appModule = module {
     singleOf(::SpotifyApiClient)
     singleOf(::AuthRedirectServer)
     singleOf(::AuthenticationFlow)
+    singleOf(::PluginManager)
 
     factory { SpotifyPlaybackScreenModel(get()) }
 }
