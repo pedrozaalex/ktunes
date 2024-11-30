@@ -5,7 +5,8 @@ import com.soaresalex.ktunes.data.AuthRedirectServer
 import com.soaresalex.ktunes.data.OAuthStateService
 import com.soaresalex.ktunes.data.SpotifyApiClient
 import com.soaresalex.ktunes.data.SpotifyAuthClient
-import com.soaresalex.ktunes.plugins.PluginManager
+import com.soaresalex.ktunes.plugins.KTunesPluginManager
+import com.soaresalex.ktunes.viewmodels.PlaybackViewModel
 import org.koin.core.context.startKoin
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
@@ -18,11 +19,10 @@ val appModule = module {
     singleOf(::SpotifyAuthClient)
     singleOf(::SpotifyApiClient)
     singleOf(::AuthRedirectServer)
-    singleOf(::PluginManager)
+    singleOf(::KTunesPluginManager)
 
     // ViewModels
     factoryOf(::PlaybackViewModel)
-    factoryOf(::PluginViewModel)
 }
 
 fun initializeKoin() {

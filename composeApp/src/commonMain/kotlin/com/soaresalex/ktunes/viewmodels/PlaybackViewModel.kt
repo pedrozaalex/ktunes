@@ -1,8 +1,13 @@
 package com.soaresalex.ktunes.viewmodels
 
 import androidx.lifecycle.ViewModel
-import com.soaresalex.ktunes.data.SpotifyApiClient
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 /**
  * Represents metadata for a playable audio track
@@ -46,17 +51,13 @@ interface AudioPlaybackService {
  * Represents the current state of the audio player
  */
 data class PlayerState(
-    val track: AudioTrack?,
-    val isPlaying: Boolean,
-    val currentPosition: Long
+    val track: AudioTrack?, val isPlaying: Boolean, val currentPosition: Long
 )
 
 /**
  * ViewModel for managing audio playback across different services
  */
-class PlaybackViewModel(
-    private val servicePluginRegistry: ServicePluginRegistry
-) : ViewModel() {
+class PlaybackViewModel() : ViewModel() {
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
     private val _currentTrack = MutableStateFlow<AudioTrack?>(null)
@@ -74,13 +75,6 @@ class PlaybackViewModel(
         val currentServiceId: String? = null
     )
 
-    // Switch to a specific playback service by its plugin ID
-    fun switchService(serviceId: String) {
-        val plugin = servicePluginRegistry.getPlugin(serviceId)
-        currentService = plugin.createPlaybackService()
-        refresh()
-    }
-
     fun refresh() {
         coroutineScope.launch {
             try {
@@ -92,16 +86,14 @@ class PlaybackViewModel(
                     _currentTrack.value = null
                     _playbackState.update {
                         it.copy(
-                            isPlaying = false,
-                            currentServiceId = currentService?.javaClass?.simpleName
+                            isPlaying = false, currentServiceId = currentService?.javaClass?.simpleName
                         )
                     }
                 } else {
                     _currentTrack.value = playerState.track
                     _playbackState.update {
                         it.copy(
-                            isPlaying = playerState.isPlaying,
-                            currentServiceId = currentService?.javaClass?.simpleName
+                            isPlaying = playerState.isPlaying, currentServiceId = currentService?.javaClass?.simpleName
                         )
                     }
                 }
@@ -116,9 +108,7 @@ class PlaybackViewModel(
     private fun updatePlaybackStateOptimistically(expectedPlayingState: Boolean) {
         _playbackState.update {
             it.copy(
-                isPlaying = expectedPlayingState,
-                isLoading = true,
-                error = null
+                isPlaying = expectedPlayingState, isLoading = true, error = null
             )
         }
     }
@@ -127,9 +117,7 @@ class PlaybackViewModel(
         _currentTrack.value = null
         _playbackState.update {
             it.copy(
-                isPlaying = false,
-                isLoading = false,
-                error = "$baseMessage: ${e.message}"
+                isPlaying = false, isLoading = false, error = "$baseMessage: ${e.message}"
             )
         }
     }
@@ -150,10 +138,5 @@ class PlaybackViewModel(
                 handlePlaybackError(e, "Playback action failed")
             }
         }
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        // Cleanup resources if needed
     }
 }

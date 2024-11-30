@@ -6,7 +6,7 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import java.awt.Dimension
 import com.soaresalex.ktunes.app.App
-import com.soaresalex.ktunes.app.initialize
+import com.soaresalex.ktunes.di.initializeKoin
 
 fun main() = application {
     Window(
@@ -15,7 +15,7 @@ fun main() = application {
         onCloseRequest = ::exitApplication,
     ) {
         window.minimumSize = Dimension(350, 600)
-        initialize()
+        initializeKoin()
         App()
     }
 }
