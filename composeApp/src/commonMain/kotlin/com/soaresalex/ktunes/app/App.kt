@@ -1,7 +1,11 @@
 package com.soaresalex.ktunes.app
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.hoverable
@@ -14,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.window.WindowDraggableArea
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,6 +35,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.WindowScope
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.CurrentScreen
@@ -41,12 +47,72 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.*
 
 @Composable
-fun App() {
-    AppTheme {
-        Navigator(MainScreen) {
-            CurrentScreen()
+fun WindowScope.TitleBar(
+    currentTrack: String = "Not Playing", currentArtist: String = "", onClose: () -> Unit = {}
+) = WindowDraggableArea {
+    Row(
+        modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        // Currently playing track information
+        Row(
+            modifier = Modifier.weight(1f).padding(start = 16.dp), verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = currentTrack, style = MaterialTheme.typography.bodyMedium, maxLines = 1
+                )
+                if (currentArtist.isNotEmpty()) {
+                    Text(
+                        text = currentArtist, style = MaterialTheme.typography.bodySmall, maxLines = 1
+                    )
+                }
+            }
+        }
+
+
+        IconButton(
+            onClick = onClose, modifier = Modifier.size(40.dp)
+        ) {
+            Icon(
+                imageVector = FeatherIcons.X,
+                contentDescription = "Close",
+            )
         }
     }
+}
+
+
+@Composable
+fun App(
+    titlebar: @Composable (content: @Composable () -> Unit) -> Unit = { },
+) = AppTheme {
+    var searchQuery by remember { mutableStateOf(TextFieldValue("")) }
+
+    Column(Modifier.padding(4.dp)) {
+        titlebar({
+            Row(verticalAlignment = Alignment.Top) {
+                SearchBar(
+                    query = searchQuery,
+                    onQueryChange = { searchQuery = it },
+                    modifier = Modifier.fillMaxWidth(0.5f).defaultMinSize(minWidth = 200.dp),
+                )
+
+                Row {
+                    ThemeToggleButton()
+                    SettingsButton()
+                }
+            }
+        })
+
+        Navigator(MainScreen) { CurrentScreen() }
+    }
+}
+
+@Composable
+fun SettingsButton() = IconButton(onClick = { /* Open settings */ }) {
+    Icon(FeatherIcons.Settings, contentDescription = "Settings")
 }
 
 enum class LibraryCategory {
@@ -57,79 +123,18 @@ object MainScreen : Screen {
     @Composable
     override fun Content() {
         var selectedCategory by remember { mutableStateOf(LibraryCategory.TRACKS) }
-        var searchQuery by remember { mutableStateOf(TextFieldValue("")) }
-        var isNavigationExpanded by remember { mutableStateOf(false) }
 
-        Scaffold(topBar = {
-            TopAppBar(navigationIcon = {
-                IconButton(onClick = { isNavigationExpanded = !isNavigationExpanded }) {
-                    Icon(FeatherIcons.Menu, contentDescription = "Navigation")
-                }
-            }, title = {
-                SearchBar(
-                    query = searchQuery,
-                    onQueryChange = { searchQuery = it },
-                    modifier = Modifier.fillMaxWidth(0.5f),
-                )
-            }, actions = {
-                ThemeToggleButton()
-                IconButton(onClick = { /* Open settings */ }) {
-                    Icon(FeatherIcons.Settings, contentDescription = "Settings")
-                }
-            })
-        }, content = { paddingValues ->
-            Row(
-                modifier = Modifier.fillMaxSize().padding(paddingValues)
-            ) {
+        Scaffold { paddingValues ->
+            Row(Modifier.fillMaxSize().padding(paddingValues)) {
                 NavigationSidebar(
                     selectedCategory = selectedCategory,
                     onCategorySelected = { selectedCategory = it },
-                    isExpanded = isNavigationExpanded
                 )
 
-                Column(
-                    modifier = Modifier.weight(1f).padding(16.dp)
-                ) {
+                Box(Modifier.weight(1f)) {
                     LibraryContent(
                         category = selectedCategory, viewModel = koinScreenModel()
                     )
-                }
-            }
-        }, bottomBar = {
-            BottomPlaybackBar()
-        })
-    }
-}
-
-
-@Composable
-fun TopAppBar(
-    navigationIcon: @Composable () -> Unit = {},
-    title: @Composable () -> Unit = {},
-    actions: @Composable () -> Unit = {}
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surface
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().height(64.dp).padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center // Added to center title
-        ) {
-            Box(modifier = Modifier.width(48.dp)) {
-                navigationIcon()
-            }
-
-            Box(
-                modifier = Modifier.weight(1f).padding(horizontal = 16.dp).fillMaxWidth(0.5f), // Constrained width
-                contentAlignment = Alignment.Center
-            ) {
-                title()
-            }
-
-            Box(modifier = Modifier.width(IntrinsicSize.Min)) {
-                Row {
-                    actions()
                 }
             }
         }
@@ -153,14 +158,10 @@ fun ThemeToggleButton() {
 
 @Composable
 fun NavigationSidebar(
-    selectedCategory: LibraryCategory, onCategorySelected: (LibraryCategory) -> Unit, isExpanded: Boolean = false
+    selectedCategory: LibraryCategory, onCategorySelected: (LibraryCategory) -> Unit
 ) {
-    val animatedWidth by animateDpAsState(
-        targetValue = if (isExpanded) 120.dp else 80.dp, animationSpec = tween(durationMillis = 150)
-    )
-
     NavigationRail(
-        modifier = Modifier.width(animatedWidth)
+        modifier = Modifier.width(80.dp)
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             NavigationRailItem(
@@ -172,13 +173,7 @@ fun NavigationSidebar(
                 label = {
                     // Use Box with fixed height to prevent layout shifts
                     Box(modifier = Modifier.height(20.dp)) {
-                        this@Column.AnimatedVisibility(
-                            visible = isExpanded,
-                            enter = fadeIn() + expandHorizontally(),
-                            exit = fadeOut() + shrinkHorizontally()
-                        ) {
-                            Text("Tracks")
-                        }
+                        Text("Tracks")
                     }
                 })
             NavigationRailItem(
@@ -189,13 +184,7 @@ fun NavigationSidebar(
                 },
                 label = {
                     Box(modifier = Modifier.height(20.dp)) {
-                        this@Column.AnimatedVisibility(
-                            visible = isExpanded,
-                            enter = fadeIn() + expandHorizontally(),
-                            exit = fadeOut() + shrinkHorizontally()
-                        ) {
-                            Text("Albums")
-                        }
+                        Text("Albums")
                     }
                 })
             NavigationRailItem(
@@ -206,13 +195,7 @@ fun NavigationSidebar(
                 },
                 label = {
                     Box(modifier = Modifier.height(20.dp)) {
-                        this@Column.AnimatedVisibility(
-                            visible = isExpanded,
-                            enter = fadeIn() + expandHorizontally(),
-                            exit = fadeOut() + shrinkHorizontally()
-                        ) {
-                            Text("Artists")
-                        }
+                        Text("Artists")
                     }
                 })
             NavigationRailItem(
@@ -223,13 +206,7 @@ fun NavigationSidebar(
                 },
                 label = {
                     Box(modifier = Modifier.height(20.dp)) {
-                        this@Column.AnimatedVisibility(
-                            visible = isExpanded,
-                            enter = fadeIn() + expandHorizontally(),
-                            exit = fadeOut() + shrinkHorizontally()
-                        ) {
-                            Text("Playlists")
-                        }
+                        Text("Playlists")
                     }
                 })
         }
@@ -284,7 +261,7 @@ fun SearchBar(
     }
 
     Box(
-        modifier = modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(28.dp))
+        modifier = modifier.fillMaxWidth().height(40.dp).clip(RoundedCornerShape(28.dp))
             .background(dynamicBackgroundColor).border(
                 width = borderAnimation.dp, color = borderColor, shape = RoundedCornerShape(28.dp)
             ).hoverable(interactionSource).padding(horizontal = 16.dp), contentAlignment = Alignment.CenterStart
@@ -297,7 +274,7 @@ fun SearchBar(
         ) {
             // Search Icon with Dynamic Color
             Box(
-                modifier = Modifier.size(24.dp), contentAlignment = Alignment.Center
+                modifier = Modifier.size(20.dp), contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = FeatherIcons.Search, contentDescription = "Search", tint = iconColor
@@ -366,13 +343,11 @@ fun SearchBar(
 @Composable
 fun LibraryContent(
     category: LibraryCategory, viewModel: LibraryViewModel
-) {
-    when (category) {
-        LibraryCategory.TRACKS -> TracksList(viewModel)
-        LibraryCategory.ALBUMS -> AlbumsList(viewModel)
-        LibraryCategory.ARTISTS -> ArtistsList(viewModel)
-        LibraryCategory.PLAYLISTS -> PlaylistsList(viewModel)
-    }
+) = when (category) {
+    LibraryCategory.TRACKS -> TracksList(viewModel)
+    LibraryCategory.ALBUMS -> AlbumsList(viewModel)
+    LibraryCategory.ARTISTS -> ArtistsList(viewModel)
+    LibraryCategory.PLAYLISTS -> PlaylistsList(viewModel)
 }
 
 @Composable
