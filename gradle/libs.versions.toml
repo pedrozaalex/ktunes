@@ -18,6 +18,7 @@ composeIcons = "1.1.1"
 github-api = "1.116"
 jgit = "7.0.0.202409031743-r"
 lifecycle-viewmodel-compose = "2.8.2"
+jaudiotagger = "3.0.1"
 
 [libraries]
 
@@ -70,6 +71,8 @@ sqlDelight-driver-js = { module = "app.cash.sqldelight:web-worker-driver", versi
 kstore = { module = "io.github.xxfast:kstore", version.ref = "kstore" }
 
 composeIcons-featherIcons = { module = "br.com.devsrsouza.compose.icons:feather", version.ref = "composeIcons" }
+
+jaudiotagger = { module = "net.jthink:jaudiotagger", version.ref = "jaudiotagger" }
 
 github-api = { module = "org.kohsuke:github-api", version.ref = "github-api" }
 jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version.ref = "jgit" }

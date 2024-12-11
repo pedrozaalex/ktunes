@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.dp
 
 data class LibraryItemStyle(
     val imageSize: Dp,
-    val showArtist: Boolean,
+    val showSecondaryText: Boolean,
     val primaryTextStyle: TextStyle,
     val secondaryTextStyle: TextStyle
 )
@@ -45,12 +45,14 @@ fun LibraryItem(
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = primaryText,
-                style = style.primaryTextStyle
+                style = style.primaryTextStyle,
+                maxLines = 1
             )
-            if (style.showArtist && !secondaryText.isNullOrBlank()) {
+            if (style.showSecondaryText && !secondaryText.isNullOrBlank()) {
                 Text(
                     text = secondaryText,
-                    style = style.secondaryTextStyle
+                    style = style.secondaryTextStyle,
+                    maxLines = 1
                 )
             }
         }

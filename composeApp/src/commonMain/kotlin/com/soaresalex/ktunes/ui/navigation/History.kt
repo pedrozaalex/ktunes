@@ -13,11 +13,9 @@ import org.koin.core.component.KoinComponent
 class History : KoinComponent {
     private var navigator: Navigator? = null
 
-    // Change to MutableStateFlow to ensure reactive updates
     private val _navigationHistory = MutableStateFlow<List<Screen>>(emptyList())
     val navigationHistory: StateFlow<List<Screen>> = _navigationHistory.asStateFlow()
 
-    // Use MutableStateFlow for current history index to make it reactive
     private val _currentHistoryIndex = MutableStateFlow(-1)
     val currentHistoryIndex: StateFlow<Int> = _currentHistoryIndex.asStateFlow()
 
@@ -27,25 +25,24 @@ class History : KoinComponent {
     private fun updateHistory(screen: Screen) {
         Logger.d("updateHistory: $screen")
 
-        // If we're not at the end of history, trim the forward history
-        val trimmedHistory = if (_currentHistoryIndex.value < _navigationHistory.value.size - 1) {
+        // If we're not at the end of history, remove forward history
+        val currentHistory = if (_currentHistoryIndex.value < _navigationHistory.value.size - 1) {
             _navigationHistory.value.subList(0, _currentHistoryIndex.value + 1)
         } else {
             _navigationHistory.value
         }
 
         // Add the new screen
-        _navigationHistory.value = trimmedHistory + screen
+        val newHistory = currentHistory + screen
+        _navigationHistory.value = newHistory
 
         // Update the current index and screen
-        _currentHistoryIndex.value = _navigationHistory.value.size - 1
+        _currentHistoryIndex.value = newHistory.size - 1
         _currentScreen.value = screen
     }
 
     fun init(navigator: Navigator) {
         this.navigator = navigator
-
-        // Initialize the history with the current screen
         updateHistory(navigator.lastItem)
     }
 
@@ -54,7 +51,7 @@ class History : KoinComponent {
             _currentHistoryIndex.value--
             val previousScreen = _navigationHistory.value[_currentHistoryIndex.value]
             navigator?.replace(previousScreen)
-            updateHistory(previousScreen)
+            _currentScreen.value = previousScreen
             return true
         }
         return false
@@ -65,7 +62,7 @@ class History : KoinComponent {
             _currentHistoryIndex.value++
             val nextScreen = _navigationHistory.value[_currentHistoryIndex.value]
             navigator?.replace(nextScreen)
-            updateHistory(nextScreen)
+            _currentScreen.value = nextScreen
             return true
         }
         return false

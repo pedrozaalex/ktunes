@@ -1,47 +1,32 @@
 package com.soaresalex.ktunes.data.service
 
+import co.touchlab.kermit.Logger
+import com.russhwolf.settings.Settings
 import com.soaresalex.ktunes.data.models.Album
 import com.soaresalex.ktunes.data.models.Artist
 import com.soaresalex.ktunes.data.models.Track
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
+import org.jaudiotagger.audio.AudioFileIO
+import org.jaudiotagger.tag.FieldKey
 import java.io.File
 
 class LocalMediaService(
-    private val metadataService: MetadataService
+    private val metadataService: MetadataService, private val settings: Settings
 ) : MediaService {
-    /**
-     * Configuration for media library location and scanning
-     */
-    data class LibraryConfig(
-        var libraryFolderPath: String = defaultLibraryPath()
-    ) {
-        companion object {
-            fun defaultLibraryPath(): String = when {
-                System.getProperty("os.name").lowercase().contains("win") -> "${System.getProperty("user.home")}\\Music"
+    private val libraryPath: String
+        get() = settings.getString(LIBRARY_PATH_KEY, defaultLibraryPath())
 
-                System.getProperty("os.name").lowercase().contains("mac") -> "${System.getProperty("user.home")}/Music"
-
-                else -> "${System.getProperty("user.home")}/Music"
-            }
-        }
-
-        /**
-         * Update the library folder path
-         * @param newPath The new path to set as the library folder
-         */
-        fun updateLibraryPath(newPath: String) {
-            libraryFolderPath = newPath
-        }
+    fun updateLibraryPath(newPath: String) {
+        require(File(newPath).isDirectory) { "Specified path must be a valid directory" }
+        settings.putString(LIBRARY_PATH_KEY, newPath)
     }
 
-    private val libraryConfig = LibraryConfig()
-
     override suspend fun getTracks(): List<Track> = withContext(Dispatchers.IO) {
-        val mediaFiles = scanMediaFiles()
-        mediaFiles.map { file ->
-            extractTrackMetadata(file)
-        }
+        scanMediaFiles().map { file ->
+            async { extractTrackMetadata(file) }
+        }.map { it.await() }
     }
 
     override suspend fun getAlbums(): List<Album> {
@@ -71,27 +56,16 @@ class LocalMediaService(
     }
 
     private fun scanMediaFiles(): List<File> {
-        val rootDir = File(libraryConfig.libraryFolderPath)
-        return rootDir.walkTopDown().filter { it.isFile }
-            .filter { it.extension.lowercase() in SUPPORTED_AUDIO_EXTENSIONS }.toList()
+        val rootDir = File(libraryPath)
+        return rootDir.walkTopDown().filter { it.isFile && it.extension.lowercase() in SUPPORTED_AUDIO_EXTENSIONS }
+            .toList()
     }
 
     private suspend fun extractTrackMetadata(file: File): Track {
-        // First try to extract metadata from the file directly
-        val fileMetadata = try {
-            extractLocalFileMetadata(file)
-        } catch (e: Exception) {
-            null
-        }
-
-        // If local metadata extraction fails, try online metadata service
-        val enhancedMetadata = fileMetadata ?: run {
-            try {
-                metadataService.fetchMetadata(file.name)
-            } catch (e: Exception) {
-                null
-            }
-        }
+        val localMetadata = extractLocalFileMetadata(file)
+        val enhancedMetadata = localMetadata ?: runCatching {
+            metadataService.fetchMetadata(file.name)
+        }.getOrNull()
 
         return Track(
             id = file.absolutePath.hashCode().toString(),
@@ -107,14 +81,59 @@ class LocalMediaService(
     }
 
     private fun extractLocalFileMetadata(file: File): Track? {
-        // Platform-specific metadata extraction would go here
-        // This is a placeholder and would need platform-specific implementations
-        return null
+        return try {
+            MediaFileReader(file).let {
+                Track(
+                    id = file.absolutePath.hashCode().toString(),
+                    title = it.getTitle() ?: file.nameWithoutExtension,
+                    artist = it.getArtist() ?: "Unknown Artist",
+                    album = it.getAlbum() ?: "Unknown Album",
+                    duration = it.getDuration(),
+                    albumArtUri = it.getAlbumArtUri(),
+                    trackNumber = it.getTrackNumber(),
+                    year = it.getYear() ?: 0,
+                    fileUri = file.absolutePath
+                )
+            }
+        } catch (e: Exception) {
+            Logger.e("Error extracting metadata from file: ${file.name}", e)
+            null
+        }
     }
+
+    class MediaFileReader(private val file: File) {
+        private val audioFile by lazy { AudioFileIO.read(file) }
+        private val tag by lazy { audioFile.tag }
+
+        private fun getTagValue(fieldKey: FieldKey): String? {
+            return tag.getFirst(fieldKey).takeIf { !it.isNullOrBlank() }
+        }
+
+        fun getTitle(): String? = getTagValue(FieldKey.TITLE)
+        fun getArtist(): String? = getTagValue(FieldKey.ARTIST)
+        fun getAlbum(): String? = getTagValue(FieldKey.ALBUM)
+
+        fun getDuration(): Long = (audioFile.audioHeader.preciseTrackLength * 1000).toLong()
+
+        fun getAlbumArtUri(): String? = tag.firstArtwork?.imageUrl
+
+        fun getTrackNumber(): Int? = getTagValue(FieldKey.TRACK)?.toIntOrNull()
+
+        fun getYear(): Int? = getTagValue(FieldKey.YEAR)?.toIntOrNull()
+    }
+
 
     companion object {
         private val SUPPORTED_AUDIO_EXTENSIONS = setOf(
             "mp3", "flac", "wav", "ogg", "m4a", "aac", "wma"
         )
+
+        private const val LIBRARY_PATH_KEY = "library_path"
+
+        private fun defaultLibraryPath(): String = when {
+            System.getProperty("os.name").lowercase().contains("win") -> "${System.getProperty("user.home")}\\Music"
+
+            else -> "${System.getProperty("user.home")}/Music"
+        }
     }
 }

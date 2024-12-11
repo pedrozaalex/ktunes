@@ -46,6 +46,7 @@ kotlin {
             implementation(libs.voyager.transitions)
             implementation(libs.voyager.koin)
             implementation(libs.lifecycle.viewmodel.compose)
+            implementation(libs.jaudiotagger)
             implementation(libs.github.api)
             implementation(libs.jgit)
             implementation(libs.pf4j)
