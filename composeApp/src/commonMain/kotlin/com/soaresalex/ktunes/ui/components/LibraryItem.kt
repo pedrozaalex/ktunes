@@ -43,89 +43,108 @@ fun LibraryItem(
         modifier = Modifier.fillMaxWidth()
     ) {
         when (viewType) {
-            LibraryViewType.GRID -> LibraryItemContent(
-                primaryText = primaryText,
-                secondaryText = secondaryText,
-                additionalText = null,
-                artworkUrl = artworkUrl,
-                style = style,
-                isGrid = true
-            )
-
-            LibraryViewType.LIST -> LibraryItemContent(
-                primaryText = primaryText,
-                secondaryText = secondaryText,
-                additionalText = additionalText,
-                artworkUrl = artworkUrl,
-                style = style,
-                isGrid = false
-            )
-
-            LibraryViewType.TABLE -> TableLibraryItemContent(
-                primaryText = primaryText,
-                secondaryText = secondaryText,
-                additionalText = additionalText,
-                artworkUrl = artworkUrl,
-                style = style
-            )
-        }
-    }
-}
-
-@Composable
-private fun LibraryItemContent(
-    primaryText: String,
-    secondaryText: String? = null,
-    additionalText: String? = null,
-    artworkUrl: String? = null,
-    style: LibraryItemStyle,
-    isGrid: Boolean
-) {
-    if (isGrid) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(style.contentPadding),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            LibraryItemImage(
-                artworkUrl,
-                primaryText,
-                style.imageSize,
-                style.imageShape
-            )
-            Spacer(modifier = Modifier.height(style.spacing))
-            LibraryItemText(
-                primaryText,
-                secondaryText
-            )
-        }
-    } else {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(style.contentPadding),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(style.spacing)
-        ) {
-            LibraryItemImage(
-                artworkUrl,
-                primaryText,
-                80.dp,
-                style.imageShape
-            )
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                LibraryItemText(
-                    primaryText,
-                    secondaryText
-                )
-                additionalText?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+            LibraryViewType.GRID -> {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(style.contentPadding),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    LibraryItemImage(
+                        artworkUrl,
+                        primaryText,
+                        style.imageSize,
+                        style.imageShape
                     )
+                    Spacer(modifier = Modifier.height(style.spacing))
+                    LibraryItemText(
+                        primaryText,
+                        secondaryText
+                    )
+                }
+            }
+
+            LibraryViewType.LIST -> {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(style.contentPadding),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(style.spacing)
+                ) {
+                    LibraryItemImage(
+                        artworkUrl,
+                        primaryText,
+                        80.dp,
+                        style.imageShape
+                    )
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        LibraryItemText(
+                            primaryText,
+                            secondaryText
+                        )
+                        additionalText?.let {
+                            Text(
+                                text = it,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
+            }
+
+            LibraryViewType.TABLE -> {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(
+                            horizontal = 8.dp,
+                            vertical = 4.dp
+                        ),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    LibraryItemImage(
+                        artworkUrl = artworkUrl,
+                        contentDescription = primaryText,
+                        size = 80.dp,
+                        shape = MaterialTheme.shapes.small
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Column(
+                        modifier = Modifier.weight(0.4f),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = primaryText,
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        additionalText?.let {
+                            Text(
+                                text = it,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+
+                    secondaryText?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.weight(0.4f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.End
+                        )
+                    }
                 }
             }
         }
@@ -168,65 +187,5 @@ private fun LibraryItemText(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
-    }
-}
-
-@Composable
-private fun TableLibraryItemContent(
-    primaryText: String,
-    secondaryText: String? = null,
-    additionalText: String? = null,
-    artworkUrl: String? = null,
-    style: LibraryItemStyle
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(
-            horizontal = 8.dp,
-            vertical = 4.dp
-        ),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        LibraryItemImage(
-            artworkUrl = artworkUrl,
-            contentDescription = primaryText,
-            size = 80.dp,
-            shape = MaterialTheme.shapes.small
-        )
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        Column(
-            modifier = Modifier.weight(0.4f),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = primaryText,
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            additionalText?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-        }
-
-        secondaryText?.let {
-            Text(
-                text = it,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.weight(0.4f),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = androidx.compose.ui.text.style.TextAlign.End
-            )
-        }
     }
 }
