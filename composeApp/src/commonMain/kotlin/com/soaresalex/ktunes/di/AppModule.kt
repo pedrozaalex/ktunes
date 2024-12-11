@@ -3,32 +3,29 @@ package com.soaresalex.ktunes.di
 import com.russhwolf.settings.Settings
 import com.soaresalex.ktunes.data.AuthRedirectServer
 import com.soaresalex.ktunes.data.OAuthStateService
-import com.soaresalex.ktunes.data.SpotifyApiClient
-import com.soaresalex.ktunes.data.SpotifyAuthClient
-import com.soaresalex.ktunes.plugins.KTunesPluginManager
-import com.soaresalex.ktunes.repositories.DynamicLibraryRepositoryProvider
-import com.soaresalex.ktunes.repositories.LibraryRepositoryProvider
-import com.soaresalex.ktunes.viewmodels.LibraryViewModel
-import com.soaresalex.ktunes.viewmodels.PlaybackViewModel
+import com.soaresalex.ktunes.data.repository.LibraryRepository
+import com.soaresalex.ktunes.data.service.LocalMediaService
+import com.soaresalex.ktunes.data.service.MediaService
+import com.soaresalex.ktunes.data.service.MetadataService
+import com.soaresalex.ktunes.data.service.NullMetadataService
+import com.soaresalex.ktunes.screenmodels.LibraryScreenModel
+import com.soaresalex.ktunes.ui.navigation.History
 import org.koin.core.context.startKoin
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
+import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val appModule = module {
-    // Singleton Services
     singleOf(::Settings)
+    singleOf(::History)
     singleOf(::OAuthStateService)
-    singleOf(::SpotifyAuthClient)
-    singleOf(::SpotifyApiClient)
     singleOf(::AuthRedirectServer)
-    singleOf(::KTunesPluginManager)
+    singleOf(::NullMetadataService) bind MetadataService::class
+    singleOf(::LocalMediaService) bind MediaService::class
+    singleOf(::LibraryRepository)
 
-    single<LibraryRepositoryProvider> { DynamicLibraryRepositoryProvider() }
-
-    // ViewModels
-    factoryOf(::PlaybackViewModel)
-    factoryOf(::LibraryViewModel)
+    factoryOf(::LibraryScreenModel)
 }
 
 fun initializeKoin() {
