@@ -26,7 +26,7 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.CurrentScreen
 import cafe.adriel.voyager.navigator.Navigator
 import com.russhwolf.settings.Settings
-import com.russhwolf.settings.int
+import com.soaresalex.ktunes.data.observableState
 import com.soaresalex.ktunes.theme.AppTheme
 import com.soaresalex.ktunes.ui.components.CloseButton
 import com.soaresalex.ktunes.ui.components.MenuButton
@@ -61,7 +61,6 @@ fun TitleBar() = Row(
     }
 }
 
-
 @Composable
 fun App(
     titlebarContainer: @Composable (content: @Composable () -> Unit) -> Unit = { },
@@ -69,15 +68,10 @@ fun App(
     val settings: Settings = koinInject()
     val history: History = koinInject()
 
-    var sidebarWidth: Int by settings.int(
+    var sidebarWidth: Int by settings.observableState(
         "sidebarWidth",
         200
     )
-    var _sidebarWidth by remember { mutableStateOf(sidebarWidth) }
-
-    LaunchedEffect(_sidebarWidth) {
-        sidebarWidth = _sidebarWidth
-    }
 
     Column(
         Modifier.padding(6.dp),
@@ -110,7 +104,7 @@ fun App(
 
             Row(Modifier.fillMaxSize()) {
                 Sidebar(
-                    width = _sidebarWidth.dp,
+                    width = sidebarWidth.dp,
                     items = sidebarItemData,
                 )
 
@@ -118,7 +112,7 @@ fun App(
                     Modifier.draggable(
                         orientation = Orientation.Horizontal,
                         state = rememberDraggableState { delta ->
-                            _sidebarWidth += delta.toInt()
+                            sidebarWidth += delta.toInt()
                         }).pointerHoverIcon(PointerIcon.Hand).width(4.dp).fillMaxHeight()
                 )
 

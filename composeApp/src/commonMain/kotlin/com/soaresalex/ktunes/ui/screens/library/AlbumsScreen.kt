@@ -1,14 +1,14 @@
 package com.soaresalex.ktunes.ui.screens.library
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
 import cafe.adriel.voyager.koin.koinScreenModel
 import com.soaresalex.ktunes.data.models.Album
 import com.soaresalex.ktunes.screenmodels.LibraryScreenModel
 import com.soaresalex.ktunes.ui.components.LibraryItem
+import com.soaresalex.ktunes.ui.components.LibraryItemStyle
 import com.soaresalex.ktunes.ui.screens.details.AlbumDetailScreen
 
 object AlbumsScreen : BaseLibraryScreen<Album>() {
@@ -18,17 +18,18 @@ object AlbumsScreen : BaseLibraryScreen<Album>() {
         val albums by screenModel.albums.collectAsState()
 
         LibraryScreenTemplate(
-            viewModel = screenModel,
+            screenModel = screenModel,
             items = albums,
-            itemContent = { album ->
+            itemContent = { album, viewType ->
                 LibraryItem(
                     primaryText = album.title,
                     secondaryText = album.artist,
                     artworkUrl = album.coverArtUri,
-                    modifier = Modifier.clickable(onClick = {
+                    viewType = viewType,
+                    style = LibraryItemStyle(CircleShape),
+                    onClick = {
                         screenModel.history.navigateTo(AlbumDetailScreen(album))
                     })
-                )
             })
     }
 

@@ -1,69 +1,232 @@
 package com.soaresalex.ktunes.ui.components
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.soaresalex.ktunes.ui.screens.library.LibraryViewType
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.Image
 
 data class LibraryItemStyle(
-    val imageSize: Dp,
-    val showSecondaryText: Boolean,
-    val primaryTextStyle: TextStyle,
-    val secondaryTextStyle: TextStyle
+    val imageShape: androidx.compose.ui.graphics.Shape,
+    val imageSize: Dp = 120.dp,
+    val contentPadding: PaddingValues = PaddingValues(8.dp),
+    val spacing: Dp = 8.dp
 )
 
 @Composable
 fun LibraryItem(
     primaryText: String,
     secondaryText: String? = null,
+    additionalText: String? = null,
     artworkUrl: String? = null,
-    style: LibraryItemStyle = LibraryItemStyle(
-        120.dp,
-        true,
-        MaterialTheme.typography.bodyMedium,
-        MaterialTheme.typography.bodySmall
-    ),
-    modifier: Modifier = Modifier,
+    viewType: LibraryViewType = LibraryViewType.GRID,
+    style: LibraryItemStyle = LibraryItemStyle(MaterialTheme.shapes.medium),
+    onClick: () -> Unit = {}
 ) {
-    Box(modifier = modifier) {
+    Surface(
+        onClick = onClick,
+        shape = MaterialTheme.shapes.medium,
+        color = Color.Transparent,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        when (viewType) {
+            LibraryViewType.GRID -> LibraryItemContent(
+                primaryText = primaryText,
+                secondaryText = secondaryText,
+                additionalText = null,
+                artworkUrl = artworkUrl,
+                style = style,
+                isGrid = true
+            )
+
+            LibraryViewType.LIST -> LibraryItemContent(
+                primaryText = primaryText,
+                secondaryText = secondaryText,
+                additionalText = additionalText,
+                artworkUrl = artworkUrl,
+                style = style,
+                isGrid = false
+            )
+
+            LibraryViewType.TABLE -> TableLibraryItemContent(
+                primaryText = primaryText,
+                secondaryText = secondaryText,
+                additionalText = additionalText,
+                artworkUrl = artworkUrl,
+                style = style
+            )
+        }
+    }
+}
+
+@Composable
+private fun LibraryItemContent(
+    primaryText: String,
+    secondaryText: String? = null,
+    additionalText: String? = null,
+    artworkUrl: String? = null,
+    style: LibraryItemStyle,
+    isGrid: Boolean
+) {
+    if (isGrid) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(8.dp),
+            modifier = Modifier.fillMaxWidth().padding(style.contentPadding),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Box(
-                modifier = Modifier.size(style.imageSize)
+            LibraryItemImage(
+                artworkUrl,
+                primaryText,
+                style.imageSize,
+                style.imageShape
+            )
+            Spacer(modifier = Modifier.height(style.spacing))
+            LibraryItemText(
+                primaryText,
+                secondaryText
+            )
+        }
+    } else {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(style.contentPadding),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(style.spacing)
+        ) {
+            LibraryItemImage(
+                artworkUrl,
+                primaryText,
+                80.dp,
+                style.imageShape
+            )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                AsyncImage(
-                    model = artworkUrl,
-                    contentDescription = primaryText,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop,
-                    placeholder = rememberVectorPainter(Icons.Filled.Star)
+                LibraryItemText(
+                    primaryText,
+                    secondaryText
                 )
+                additionalText?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
-            Spacer(modifier = Modifier.height(8.dp))
+        }
+    }
+}
+
+@Composable
+private fun LibraryItemImage(
+    artworkUrl: String?,
+    contentDescription: String,
+    size: Dp,
+    shape: androidx.compose.ui.graphics.Shape
+) {
+    AsyncImage(
+        model = artworkUrl,
+        contentDescription = contentDescription,
+        modifier = Modifier.size(size).clip(shape),
+        contentScale = ContentScale.Crop,
+        placeholder = rememberVectorPainter(FeatherIcons.Image)
+    )
+}
+
+@Composable
+private fun LibraryItemText(
+    primaryText: String,
+    secondaryText: String?
+) {
+    Text(
+        text = primaryText,
+        style = MaterialTheme.typography.bodyMedium,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis
+    )
+
+    secondaryText?.takeIf { it.isNotBlank() }?.let {
+        Text(
+            text = it,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+@Composable
+private fun TableLibraryItemContent(
+    primaryText: String,
+    secondaryText: String? = null,
+    additionalText: String? = null,
+    artworkUrl: String? = null,
+    style: LibraryItemStyle
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(
+            horizontal = 8.dp,
+            vertical = 4.dp
+        ),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        LibraryItemImage(
+            artworkUrl = artworkUrl,
+            contentDescription = primaryText,
+            size = 80.dp,
+            shape = MaterialTheme.shapes.small
+        )
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        Column(
+            modifier = Modifier.weight(0.4f),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
             Text(
                 text = primaryText,
-                style = style.primaryTextStyle,
-                maxLines = 1
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
-            if (style.showSecondaryText && !secondaryText.isNullOrBlank()) {
+
+            additionalText?.let {
                 Text(
-                    text = secondaryText,
-                    style = style.secondaryTextStyle,
-                    maxLines = 1
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
+        }
+
+        secondaryText?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(0.4f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = androidx.compose.ui.text.style.TextAlign.End
+            )
         }
     }
 }
