@@ -10,6 +10,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import org.jaudiotagger.audio.AudioFileIO
 import org.jaudiotagger.tag.FieldKey
+import org.jaudiotagger.tag.images.Artwork
 import java.io.File
 
 class LocalMediaService(
@@ -115,7 +116,55 @@ class LocalMediaService(
 
         fun getDuration(): Long = (audioFile.audioHeader.preciseTrackLength * 1000).toLong()
 
-        fun getAlbumArtUri(): String? = tag.firstArtwork?.imageUrl
+        fun getAlbumArtUri(): String? {
+            return try {
+                // First, try to get the image URL if available
+                tag.firstArtwork?.imageUrl?.takeIf { it.isNotBlank() }
+                    ?: processArtworkBinaryData()
+            } catch (e: Exception) {
+                Logger.w("Error retrieving album artwork: ${e.message}")
+                null
+            }
+        }
+
+        private fun processArtworkBinaryData(): String? {
+            val artwork = tag.firstArtwork ?: return null
+
+            // Check if artwork is linked or contains binary data
+            return when {
+                artwork.isLinked -> artwork.imageUrl
+                artwork.binaryData != null -> {
+                    // Save the binary data to a temporary file
+                    createTempArtworkFile(artwork)
+                }
+                else -> null
+            }
+        }
+
+        private fun createTempArtworkFile(artwork: Artwork): String? {
+            return try {
+                // Determine file extension based on MIME type
+                val extension = when (artwork.mimeType?.lowercase()) {
+                    "image/jpeg" -> ".jpg"
+                    "image/png" -> ".png"
+                    "image/gif" -> ".gif"
+                    else -> ".img"
+                }
+
+                // Create a temporary file in the system's temp directory
+                val tempFile = File.createTempFile("album_art_", extension, File(System.getProperty("java.io.tmpdir")))
+                tempFile.deleteOnExit() // Ensure temporary file is deleted when JVM exits
+
+                // Write binary data to the temporary file
+                tempFile.writeBytes(artwork.binaryData)
+
+                // Return the absolute path of the temporary file
+                tempFile.absolutePath
+            } catch (e: Exception) {
+                Logger.w("Failed to create temporary artwork file: ${e.message}")
+                null
+            }
+        }
 
         fun getTrackNumber(): Int? = getTagValue(FieldKey.TRACK)?.toIntOrNull()
 

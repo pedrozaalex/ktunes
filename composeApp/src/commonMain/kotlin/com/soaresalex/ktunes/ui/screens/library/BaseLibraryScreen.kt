@@ -18,7 +18,6 @@ import com.soaresalex.ktunes.screenmodels.LibraryScreenModel
 
 // Continuation of BaseLibraryScreen
 abstract class BaseLibraryScreen<T> : Screen {
-    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     protected fun LibraryScreenTemplate(
         viewModel: LibraryScreenModel,

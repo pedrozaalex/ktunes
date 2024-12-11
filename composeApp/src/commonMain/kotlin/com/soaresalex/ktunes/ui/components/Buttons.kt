@@ -4,7 +4,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.soaresalex.ktunes.theme.LocalThemeIsDark
@@ -20,13 +19,15 @@ private sealed class NavDir {
 }
 
 private data class NavButtonProps(
-    val icon: ImageVector, val description: String, val action: () -> Unit, val canNavigate: Boolean
+    val icon: ImageVector,
+    val description: String,
+    val action: () -> Unit,
+    val canNavigate: Boolean
 )
 
 @Composable
 private fun NavButton(
     direction: NavDir,
-    modifier: Modifier = Modifier,
     containerColor: Color = MaterialTheme.colorScheme.primaryContainer,
     contentColor: Color = MaterialTheme.colorScheme.onPrimaryContainer
 ) {
@@ -35,7 +36,10 @@ private fun NavButton(
     // Observe the history index to trigger recomposition
     val currentHistoryIndex by history.currentHistoryIndex.collectAsState()
 
-    val props by remember(direction, currentHistoryIndex) {
+    val props by remember(
+        direction,
+        currentHistoryIndex
+    ) {
         derivedStateOf {
             when (direction) {
                 NavDir.Back -> NavButtonProps(
@@ -58,11 +62,14 @@ private fun NavButton(
     FilledIconButton(
         onClick = props.action,
         enabled = props.canNavigate,
-        colors = IconButtonDefaults.filledIconButtonColors(containerColor, contentColor),
-        modifier = modifier
+        colors = IconButtonDefaults.filledIconButtonColors(
+            containerColor,
+            contentColor
+        ),
     ) {
         Icon(
-            imageVector = props.icon, contentDescription = props.description
+            imageVector = props.icon,
+            contentDescription = props.description
         )
     }
 }
@@ -82,23 +89,33 @@ fun ThemeToggleButton() {
             imageVector = when {
                 isDark -> FeatherIcons.Sun
                 else -> FeatherIcons.Moon
-            }, contentDescription = "Toggle Theme"
+            },
+            contentDescription = "Toggle Theme"
         )
     }
 }
 
 @Composable
 fun SettingsButton() = IconButton(onClick = { /* Open settings */ }) {
-    Icon(FeatherIcons.Settings, contentDescription = "Settings")
+    Icon(
+        FeatherIcons.Settings,
+        contentDescription = "Settings"
+    )
 }
 
 @Composable
 fun CloseButton() = IconButton(
     onClick = { exitProcess(0) }) {
     Icon(
-        Icons.Outlined.Close, "Close"
+        Icons.Outlined.Close,
+        "Close"
     )
 }
 
 @Composable
-fun MenuButton() = IconButton({ }) { Icon(FeatherIcons.Menu, "Menu") }
+fun MenuButton() = IconButton({ }) {
+    Icon(
+        FeatherIcons.Menu,
+        "Menu"
+    )
+}

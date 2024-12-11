@@ -22,9 +22,14 @@ object TracksScreen : BaseLibraryScreen<Track>() {
         val history: History = koinInject()
 
         LibraryScreenTemplate(
-            viewModel = viewModel, items = tracks, itemContent = { track ->
+            viewModel = viewModel,
+            items = tracks,
+            itemContent = { track ->
                 LibraryItem(
-                    primaryText = track.title, secondaryText = track.artist, modifier = Modifier.clickable(onClick = {
+                    primaryText = track.title,
+                    secondaryText = track.artist,
+                    artworkUrl = track.albumArtUri,
+                    modifier = Modifier.clickable(onClick = {
                         history.navigateTo(TrackDetailScreen(track))
                     })
                 )

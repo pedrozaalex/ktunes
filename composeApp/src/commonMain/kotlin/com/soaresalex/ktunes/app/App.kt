@@ -46,11 +46,15 @@ import org.koin.compose.koinInject
 fun TitleBar() = Row(
     verticalAlignment = Alignment.Top,
     horizontalArrangement = Arrangement.SpaceBetween,
-    modifier = Modifier.height(24.dp).fillMaxWidth().padding(vertical = 2.dp, horizontal = 0.dp)
+    modifier = Modifier.height(28.dp).fillMaxWidth().padding(
+        vertical = 4.dp,
+        horizontal = 0.dp
+    )
 ) {
-    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+    Row {
         NavigationButtons()
     }
+
     Row {
         MenuButton()
         CloseButton()
@@ -65,22 +69,40 @@ fun App(
     val settings: Settings = koinInject()
     val history: History = koinInject()
 
-    var sidebarWidth: Int by settings.int("sidebarWidth", 200)
+    var sidebarWidth: Int by settings.int(
+        "sidebarWidth",
+        200
+    )
     var _sidebarWidth by remember { mutableStateOf(sidebarWidth) }
 
     LaunchedEffect(_sidebarWidth) {
         sidebarWidth = _sidebarWidth
     }
 
-    Column(Modifier.padding(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(
+        Modifier.padding(6.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
         titlebarContainer {
             TitleBar()
         }
 
         val sidebarItemData = listOf(
-            SidebarItemData("Tracks", FeatherIcons.Music, TracksScreen),
-            SidebarItemData("Albums", FeatherIcons.Disc, AlbumsScreen),
-            SidebarItemData("Artists", FeatherIcons.Users, ArtistsScreen),
+            SidebarItemData(
+                "Tracks",
+                FeatherIcons.Music,
+                TracksScreen
+            ),
+            SidebarItemData(
+                "Albums",
+                FeatherIcons.Disc,
+                AlbumsScreen
+            ),
+            SidebarItemData(
+                "Artists",
+                FeatherIcons.Users,
+                ArtistsScreen
+            ),
         )
 
         Navigator(TracksScreen) { nav ->
@@ -94,15 +116,17 @@ fun App(
 
                 Box(
                     Modifier.draggable(
-                        orientation = Orientation.Horizontal, state = rememberDraggableState { delta ->
+                        orientation = Orientation.Horizontal,
+                        state = rememberDraggableState { delta ->
                             _sidebarWidth += delta.toInt()
                         }).pointerHoverIcon(PointerIcon.Hand).width(4.dp).fillMaxHeight()
                 )
 
                 Box(
                     Modifier.fillMaxSize().background(
-                            MaterialTheme.colorScheme.surfaceContainer, MaterialTheme.shapes.medium
-                        )
+                        MaterialTheme.colorScheme.surfaceContainer,
+                        MaterialTheme.shapes.medium
+                    )
                 ) { CurrentScreen() }
             }
         }
@@ -112,22 +136,30 @@ fun App(
 
 
 data class SidebarItemData(
-    val title: String, val icon: ImageVector, val screen: Screen
+    val title: String,
+    val icon: ImageVector,
+    val screen: Screen
 )
 
 @Composable
 fun Sidebar(
-    width: Dp, items: List<SidebarItemData>
+    width: Dp,
+    items: List<SidebarItemData>
 ) {
     Column(
         Modifier.fillMaxHeight().width(width).padding(8.dp)
     ) {
-        SearchBar(modifier = Modifier.fillMaxWidth(), placeholder = "Search Library")
+        SearchBar(
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = "Search Library"
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "LIBRARY", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant
+            text = "LIBRARY",
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -159,14 +191,25 @@ fun SidebarItem(
 
             .clickable(onClick = handleClick)
 
-            .background(bgColor, MaterialTheme.shapes.small)
+            .background(
+                bgColor,
+                MaterialTheme.shapes.small
+            )
 
-            .padding(8.dp), verticalAlignment = Alignment.CenterVertically
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(item.icon, item.title, tint = color)
+        Icon(
+            item.icon,
+            item.title,
+            tint = color
+        )
 
         Spacer(Modifier.width(8.dp))
 
-        Text(item.title, color = color)
+        Text(
+            item.title,
+            color = color
+        )
     }
 }

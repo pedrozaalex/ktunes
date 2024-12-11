@@ -2,15 +2,19 @@ package com.soaresalex.ktunes.screenmodels
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
+import com.russhwolf.settings.Settings
 import com.soaresalex.ktunes.data.models.Album
 import com.soaresalex.ktunes.data.models.Artist
 import com.soaresalex.ktunes.data.models.Track
 import com.soaresalex.ktunes.data.repository.LibraryRepository
+import com.soaresalex.ktunes.ui.navigation.History
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class LibraryScreenModel(
-    private val libraryRepository: LibraryRepository
+    private val libraryRepository: LibraryRepository,
+    val settings: Settings,
+    val history: History
 ) : ScreenModel {
     // Expose repository's StateFlows directly
     val tracks: StateFlow<List<Track>> = libraryRepository.tracks
