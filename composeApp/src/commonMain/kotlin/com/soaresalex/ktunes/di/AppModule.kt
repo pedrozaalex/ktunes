@@ -1,8 +1,6 @@
 package com.soaresalex.ktunes.di
 
 import com.russhwolf.settings.Settings
-import com.soaresalex.ktunes.data.AuthRedirectServer
-import com.soaresalex.ktunes.data.OAuthStateService
 import com.soaresalex.ktunes.data.repository.LibraryRepository
 import com.soaresalex.ktunes.data.service.LocalMediaService
 import com.soaresalex.ktunes.data.service.MediaService
@@ -19,8 +17,6 @@ import org.koin.dsl.module
 val appModule = module {
     singleOf(::Settings)
     singleOf(::History)
-    singleOf(::OAuthStateService)
-    singleOf(::AuthRedirectServer)
     singleOf(::NullMetadataService) bind MetadataService::class
     singleOf(::LocalMediaService) bind MediaService::class
     singleOf(::LibraryRepository)
