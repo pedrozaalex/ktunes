@@ -28,7 +28,7 @@ fun <T> Settings.observableState(
     val state = remember { mutableStateOf(storedValue) }
 
     LaunchedEffect(state.value) { // Update settings when UI state changes
-        putOrRemove(
+        update(
             key,
             state.value
         )
@@ -38,7 +38,7 @@ fun <T> Settings.observableState(
 }
 
 // Helper extension function to handle different types safely
-private fun <T> Settings.putOrRemove(
+private fun <T> Settings.update(
     key: String,
     value: T
 ) {

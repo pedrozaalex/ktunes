@@ -1,6 +1,5 @@
 package com.soaresalex.ktunes.ui.screens.library
 
-
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -17,18 +16,18 @@ object TracksScreen : BaseLibraryScreen<Track>() {
         val tracks by screenModel.tracks.collectAsState()
 
         LibraryScreenTemplate(
-            screenModel = screenModel,
-            items = tracks,
-            itemContent = { track, viewType ->
-                LibraryItem(
-                    primaryText = track.title,
-                    secondaryText = track.artist,
-                    artworkUrl = track.albumArtUri,
-                    viewType = viewType,
-                    onClick = {
-                        screenModel.history.navigateTo(TrackDetailScreen(track))
-                    })
-            })
+            screenModel,
+            tracks,
+        ) { track, viewType ->
+            LibraryItem(
+                primaryText = track.title,
+                secondaryText = track.artist,
+                artworkUrl = track.albumArtUri,
+                viewType = viewType,
+                onClick = {
+                    screenModel.history.navigateTo(TrackDetailScreen(track))
+                })
+        }
     }
 
     override fun getScreenTitle() = "Tracks"

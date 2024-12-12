@@ -18,19 +18,19 @@ object AlbumsScreen : BaseLibraryScreen<Album>() {
         val albums by screenModel.albums.collectAsState()
 
         LibraryScreenTemplate(
-            screenModel = screenModel,
-            items = albums,
-            itemContent = { album, viewType ->
-                LibraryItem(
-                    primaryText = album.title,
-                    secondaryText = album.artist,
-                    artworkUrl = album.coverArtUri,
-                    viewType = viewType,
-                    style = LibraryItemStyle(CircleShape),
-                    onClick = {
-                        screenModel.history.navigateTo(AlbumDetailScreen(album))
-                    })
-            })
+            screenModel,
+            albums,
+        ) { album, viewType ->
+            LibraryItem(
+                primaryText = album.title,
+                secondaryText = album.artist,
+                artworkUrl = album.coverArtUri,
+                viewType = viewType,
+                style = LibraryItemStyle(CircleShape),
+                onClick = {
+                    screenModel.history.navigateTo(AlbumDetailScreen(album))
+                })
+        }
     }
 
     override fun getScreenTitle() = "Albums"

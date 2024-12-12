@@ -18,8 +18,9 @@ import cafe.adriel.voyager.core.screen.Screen
 import com.soaresalex.ktunes.data.observableState
 import com.soaresalex.ktunes.screenmodels.LibraryScreenModel
 import compose.icons.FeatherIcons
-import compose.icons.feathericons.Columns
+import compose.icons.feathericons.Box
 import compose.icons.feathericons.Grid
+import compose.icons.feathericons.Layout
 import compose.icons.feathericons.List
 
 enum class LibraryViewType(val displayName: String) {
@@ -51,7 +52,7 @@ abstract class BaseLibraryScreen<T> : Screen {
             LibraryViewType.GRID.displayName
         )
 
-        Column(modifier = Modifier.fillMaxSize()) { // Top Section with Screen Title and View Type Selector
+        Column(modifier = Modifier.fillMaxSize()) {
             Row(
                 modifier = Modifier.padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -59,10 +60,10 @@ abstract class BaseLibraryScreen<T> : Screen {
                 Text(
                     text = getScreenTitle(),
                     style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(bottom = 8.dp).weight(1f)
+                    modifier = Modifier.weight(1f)
                 )
 
-                SingleChoiceSegmentedButtonRow(Modifier.height(32.dp)) {
+                SingleChoiceSegmentedButtonRow(Modifier.height(30.dp)) {
                     LibraryViewType.entries.forEachIndexed { index, viewType ->
                         SegmentedButton(
                             shape = SegmentedButtonDefaults.itemShape(
@@ -70,15 +71,15 @@ abstract class BaseLibraryScreen<T> : Screen {
                                 count = LibraryViewType.entries.size
                             ),
                             onClick = { selectedViewType = viewType.displayName },
-                            selected = selectedViewType == viewType.displayName
+                            selected = selectedViewType == viewType.displayName,
                         ) {
                             Icon(
                                 imageVector = when (viewType) {
                                     LibraryViewType.GRID -> FeatherIcons.Grid
                                     LibraryViewType.LIST -> FeatherIcons.List
-                                    LibraryViewType.TABLE -> FeatherIcons.Columns
+                                    LibraryViewType.TABLE -> FeatherIcons.Layout
                                 },
-                                contentDescription = viewType.displayName
+                                contentDescription = viewType.displayName,
                             )
                         }
                     }
@@ -114,7 +115,10 @@ abstract class BaseLibraryScreen<T> : Screen {
                                     verticalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
                                     items(items) { item ->
-                                        itemContent(item, LibraryViewType.GRID)
+                                        itemContent(
+                                            item,
+                                            LibraryViewType.GRID
+                                        )
                                     }
                                 }
                             }
@@ -124,7 +128,10 @@ abstract class BaseLibraryScreen<T> : Screen {
                                     verticalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
                                     items(items) { item ->
-                                        itemContent(item, LibraryViewType.LIST)
+                                        itemContent(
+                                            item,
+                                            LibraryViewType.LIST
+                                        )
                                     }
                                 }
                             }
@@ -134,7 +141,10 @@ abstract class BaseLibraryScreen<T> : Screen {
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     items(items) { item ->
-                                        itemContent(item, LibraryViewType.TABLE)
+                                        itemContent(
+                                            item,
+                                            LibraryViewType.TABLE
+                                        )
                                     }
                                 }
                             }

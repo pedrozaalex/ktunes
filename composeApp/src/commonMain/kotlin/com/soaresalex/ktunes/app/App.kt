@@ -29,9 +29,9 @@ import com.russhwolf.settings.Settings
 import com.soaresalex.ktunes.data.observableState
 import com.soaresalex.ktunes.theme.AppTheme
 import com.soaresalex.ktunes.ui.components.CloseButton
-import com.soaresalex.ktunes.ui.components.MenuButton
-import com.soaresalex.ktunes.ui.components.NavigationButtons
+import com.soaresalex.ktunes.ui.components.NavigationControls
 import com.soaresalex.ktunes.ui.components.SearchBar
+import com.soaresalex.ktunes.ui.components.SettingsButton
 import com.soaresalex.ktunes.ui.navigation.History
 import com.soaresalex.ktunes.ui.screens.library.AlbumsScreen
 import com.soaresalex.ktunes.ui.screens.library.ArtistsScreen
@@ -52,11 +52,11 @@ fun TitleBar() = Row(
     )
 ) {
     Row {
-        NavigationButtons()
+        NavigationControls()
     }
 
     Row {
-        MenuButton()
+        SettingsButton()
         CloseButton()
     }
 }
@@ -141,7 +141,7 @@ fun Sidebar(
     items: List<SidebarItemData>
 ) {
     Column(
-        Modifier.fillMaxHeight().width(width).padding(8.dp)
+        Modifier.fillMaxHeight().width(width)
     ) {
         SearchBar(
             modifier = Modifier.fillMaxWidth(),

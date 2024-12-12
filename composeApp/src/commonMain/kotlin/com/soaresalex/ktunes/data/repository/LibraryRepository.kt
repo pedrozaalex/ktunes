@@ -29,8 +29,7 @@ class LibraryRepository(
         try {
             val fetchedTracks = mediaService.getTracks()
             _tracks.value = fetchedTracks
-        } catch (e: Exception) {
-            // Consider using a logging framework or error handling mechanism
+        } catch (e: Exception) { // Consider using a logging framework or error handling mechanism
             _tracks.value = emptyList()
         }
     }
@@ -52,4 +51,5 @@ class LibraryRepository(
             _artists.value = emptyList()
         }
     }
+
 }

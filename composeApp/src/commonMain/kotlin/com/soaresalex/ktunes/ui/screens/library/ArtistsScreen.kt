@@ -16,17 +16,17 @@ object ArtistsScreen : BaseLibraryScreen<Artist>() {
         val artists by screenModel.artists.collectAsState()
 
         LibraryScreenTemplate(
-            screenModel = screenModel,
-            items = artists,
-            itemContent = { artist, viewType ->
-                LibraryItem(
-                    primaryText = artist.name,
-                    secondaryText = "${artist.albumCount} Albums",
-                    viewType = viewType,
-                    onClick = {
-                        screenModel.history.navigateTo(ArtistDetailScreen(artist))
-                    })
-            })
+            screenModel,
+            artists,
+        ) { artist, viewType ->
+            LibraryItem(
+                primaryText = artist.name,
+                secondaryText = "${artist.albumCount} Albums",
+                viewType = viewType,
+                onClick = {
+                    screenModel.history.navigateTo(ArtistDetailScreen(artist))
+                })
+        }
     }
 
     override fun getScreenTitle() = "Artists"

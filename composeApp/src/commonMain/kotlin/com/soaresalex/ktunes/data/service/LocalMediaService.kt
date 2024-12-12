@@ -5,29 +5,43 @@ import com.russhwolf.settings.Settings
 import com.soaresalex.ktunes.data.models.Album
 import com.soaresalex.ktunes.data.models.Artist
 import com.soaresalex.ktunes.data.models.Track
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.withContext
 import org.jaudiotagger.audio.AudioFileIO
 import org.jaudiotagger.tag.FieldKey
 import org.jaudiotagger.tag.images.Artwork
 import java.io.File
 
 class LocalMediaService(
-    private val metadataService: MetadataService, private val settings: Settings
+    private val metadataService: MetadataService,
+    private val settings: Settings
 ) : MediaService {
     private val libraryPath: String
-        get() = settings.getString(LIBRARY_PATH_KEY, defaultLibraryPath())
+        get() = settings.getString(
+            LIBRARY_PATH_KEY,
+            defaultLibraryPath()
+        )
 
     fun updateLibraryPath(newPath: String) {
         require(File(newPath).isDirectory) { "Specified path must be a valid directory" }
-        settings.putString(LIBRARY_PATH_KEY, newPath)
+        settings.putString(
+            LIBRARY_PATH_KEY,
+            newPath
+        )
     }
 
-    override suspend fun getTracks(): List<Track> = withContext(Dispatchers.IO) {
-        scanMediaFiles().map { file ->
-            async { extractTrackMetadata(file) }
-        }.map { it.await() }
+    override suspend fun getTracks(): List<Track> {
+        val files = scanMediaFiles()
+
+        return files.mapNotNull { file ->
+            runCatching {
+                extractTrackMetadata(file)
+            }.getOrElse {
+                Logger.e(
+                    "Error extracting metadata from file: ${file.name}",
+                    it
+                )
+                null
+            }
+        }
     }
 
     override suspend fun getAlbums(): List<Album> {
@@ -97,7 +111,10 @@ class LocalMediaService(
                 )
             }
         } catch (e: Exception) {
-            Logger.e("Error extracting metadata from file: ${file.name}", e)
+            Logger.e(
+                "Error extracting metadata from file: ${file.name}",
+                e
+            )
             null
         }
     }
@@ -117,10 +134,8 @@ class LocalMediaService(
         fun getDuration(): Long = (audioFile.audioHeader.preciseTrackLength * 1000).toLong()
 
         fun getAlbumArtUri(): String? {
-            return try {
-                // First, try to get the image URL if available
-                tag.firstArtwork?.imageUrl?.takeIf { it.isNotBlank() }
-                    ?: processArtworkBinaryData()
+            return try { // First, try to get the image URL if available
+                tag.firstArtwork?.imageUrl?.takeIf { it.isNotBlank() } ?: processArtworkBinaryData()
             } catch (e: Exception) {
                 Logger.w("Error retrieving album artwork: ${e.message}")
                 null
@@ -133,17 +148,17 @@ class LocalMediaService(
             // Check if artwork is linked or contains binary data
             return when {
                 artwork.isLinked -> artwork.imageUrl
-                artwork.binaryData != null -> {
-                    // Save the binary data to a temporary file
+
+                artwork.binaryData != null -> { // Save the binary data to a temporary file
                     createTempArtworkFile(artwork)
                 }
+
                 else -> null
             }
         }
 
         private fun createTempArtworkFile(artwork: Artwork): String? {
-            return try {
-                // Determine file extension based on MIME type
+            return try { // Determine file extension based on MIME type
                 val extension = when (artwork.mimeType?.lowercase()) {
                     "image/jpeg" -> ".jpg"
                     "image/png" -> ".png"
@@ -152,7 +167,11 @@ class LocalMediaService(
                 }
 
                 // Create a temporary file in the system's temp directory
-                val tempFile = File.createTempFile("album_art_", extension, File(System.getProperty("java.io.tmpdir")))
+                val tempFile = File.createTempFile(
+                    "album_art_",
+                    extension,
+                    File(System.getProperty("java.io.tmpdir"))
+                )
                 tempFile.deleteOnExit() // Ensure temporary file is deleted when JVM exits
 
                 // Write binary data to the temporary file
@@ -174,7 +193,13 @@ class LocalMediaService(
 
     companion object {
         private val SUPPORTED_AUDIO_EXTENSIONS = setOf(
-            "mp3", "flac", "wav", "ogg", "m4a", "aac", "wma"
+            "mp3",
+            "flac",
+            "wav",
+            "ogg",
+            "m4a",
+            "aac",
+            "wma"
         )
 
         private const val LIBRARY_PATH_KEY = "library_path"

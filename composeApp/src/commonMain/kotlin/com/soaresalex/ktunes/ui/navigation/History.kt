@@ -69,6 +69,8 @@ class History : KoinComponent {
     }
 
     fun navigateTo(screen: Screen) {
+        if (_currentScreen.value == screen) return
+
         navigator?.replace(screen)
         updateHistory(screen)
     }

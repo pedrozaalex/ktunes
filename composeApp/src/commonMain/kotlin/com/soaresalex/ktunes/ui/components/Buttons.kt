@@ -1,11 +1,16 @@
 package com.soaresalex.ktunes.ui.components
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
-import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
 import com.soaresalex.ktunes.theme.LocalThemeIsDark
 import com.soaresalex.ktunes.ui.navigation.History
 import compose.icons.FeatherIcons
@@ -59,23 +64,19 @@ private fun NavButton(
         }
     }
 
-    FilledIconButton(
+    IconButton(
         onClick = props.action,
         enabled = props.canNavigate,
-        colors = IconButtonDefaults.filledIconButtonColors(
-            containerColor,
-            contentColor
-        ),
     ) {
         Icon(
             imageVector = props.icon,
-            contentDescription = props.description
+            contentDescription = props.description,
         )
     }
 }
 
 @Composable
-fun NavigationButtons() {
+fun NavigationControls() {
     NavButton(NavDir.Back)
     NavButton(NavDir.Forward)
 }
@@ -99,7 +100,8 @@ fun ThemeToggleButton() {
 fun SettingsButton() = IconButton(onClick = { /* Open settings */ }) {
     Icon(
         FeatherIcons.Settings,
-        contentDescription = "Settings"
+        contentDescription = "Settings",
+        Modifier.padding(2.dp)
     )
 }
 
