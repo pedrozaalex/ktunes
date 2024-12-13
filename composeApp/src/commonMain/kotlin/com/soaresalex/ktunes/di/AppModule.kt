@@ -15,17 +15,17 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val appModule = module {
-    singleOf(::Settings)
-    singleOf(::History)
-    singleOf(::NullMetadataService) bind MetadataService::class
-    singleOf(::LocalMediaService) bind MediaService::class
-    singleOf(::LibraryRepository)
+	singleOf(::Settings)
+	singleOf(::History)
+	singleOf(::NullMetadataService) bind MetadataService::class
+	singleOf(::LocalMediaService) bind MediaService::class
+	singleOf(::LibraryRepository)
 
-    factoryOf(::LibraryScreenModel)
+	factoryOf(::LibraryScreenModel)
 }
 
 fun initializeKoin() {
-    startKoin {
-        modules(appModule)
-    }
+	startKoin {
+		modules(appModule)
+	}
 }

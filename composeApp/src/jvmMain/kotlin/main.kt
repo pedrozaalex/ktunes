@@ -16,38 +16,33 @@ import com.soaresalex.ktunes.di.initializeKoin
 import java.awt.Dimension
 
 fun main() = application {
-    initializeKoin()
+	initializeKoin()
 
-    Window(
-        title = "KTunes",
-        onCloseRequest = ::exitApplication,
-        undecorated = true,
-        transparent = true,
-    ) {
-        window.minimumSize = Dimension(
-            350,
-            600
-        )
+	Window(
+		title = "KTunes",
+		onCloseRequest = ::exitApplication,
+		undecorated = true,
+		transparent = true,
+	) {
+		window.minimumSize = Dimension(
+			350, 600
+		)
 
-        Surface(
-            modifier = Modifier.fillMaxSize().padding(5.dp).shadow(
-                3.dp,
-                RoundedCornerShape(8.dp)
-            ),
-            color = Color.Transparent,
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            App(titlebarContainer = { content ->
-                WindowDraggableArea {
-                    content()
-                }
-            })
-        }
-    }
+		Surface(
+			modifier = Modifier
+				.fillMaxSize()
+				.padding(5.dp)
+				.shadow(
+					3.dp, RoundedCornerShape(8.dp)
+				), shape = RoundedCornerShape(8.dp), color = Color.Transparent
+		) {
+			App(titlebarContainer = { WindowDraggableArea { it() } })
+		}
+	}
 }
 
 @Preview
 @Composable
 fun AppPreview() {
-    App()
+	App()
 }

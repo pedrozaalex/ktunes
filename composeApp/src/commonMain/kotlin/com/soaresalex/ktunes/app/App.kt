@@ -44,166 +44,133 @@ import org.koin.compose.koinInject
 
 @Composable
 fun TitleBar() = Row(
-    verticalAlignment = Alignment.Top,
-    horizontalArrangement = Arrangement.SpaceBetween,
-    modifier = Modifier.height(28.dp).fillMaxWidth().padding(
-        vertical = 4.dp,
-        horizontal = 0.dp
-    )
+	Modifier.height(40.dp).fillMaxWidth().padding(horizontal = 8.dp), Arrangement.SpaceBetween, Alignment.CenterVertically
 ) {
-    Row {
-        NavigationControls()
-    }
+	Row {
+		NavigationControls()
+	}
 
-    Row {
-        SettingsButton()
-        CloseButton()
-    }
+	Row(verticalAlignment = Alignment.CenterVertically) {
+		SettingsButton()
+		Spacer(Modifier.width(8.dp))
+		CloseButton()
+	}
 }
+
+val sidebarItemData = listOf(
+	SidebarItemData(
+		"Tracks", FeatherIcons.Music, TracksScreen
+	),
+	SidebarItemData(
+		"Albums", FeatherIcons.Disc, AlbumsScreen
+	),
+	SidebarItemData(
+		"Artists", FeatherIcons.Users, ArtistsScreen
+	),
+)
 
 @Composable
 fun App(
-    titlebarContainer: @Composable (content: @Composable () -> Unit) -> Unit = { },
+	titlebarContainer: @Composable (content: @Composable () -> Unit) -> Unit = { },
 ) = AppTheme {
-    val settings: Settings = koinInject()
-    val history: History = koinInject()
+	val settings: Settings = koinInject()
+	val history: History = koinInject()
 
-    var sidebarWidth: Int by settings.observableState(
-        "sidebarWidth",
-        200
-    )
+	var sidebarWidth: Int by settings.observableState(
+		"sidebarWidth", 200
+	)
 
-    Column(
-        Modifier.padding(6.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        titlebarContainer {
-            TitleBar()
-        }
+	Column(
+		Modifier.padding(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)
+	) {
+		titlebarContainer {
+			TitleBar()
+		}
 
-        val sidebarItemData = listOf(
-            SidebarItemData(
-                "Tracks",
-                FeatherIcons.Music,
-                TracksScreen
-            ),
-            SidebarItemData(
-                "Albums",
-                FeatherIcons.Disc,
-                AlbumsScreen
-            ),
-            SidebarItemData(
-                "Artists",
-                FeatherIcons.Users,
-                ArtistsScreen
-            ),
-        )
+		Navigator(TracksScreen) { nav ->
+			LaunchedEffect(nav) { history.init(nav) }
 
-        Navigator(TracksScreen) { nav ->
-            LaunchedEffect(nav) { history.init(nav) }
+			Row(Modifier.fillMaxSize().padding(4.dp)) {
+				Sidebar(
+					width = sidebarWidth.dp,
+					items = sidebarItemData,
+				)
 
-            Row(Modifier.fillMaxSize()) {
-                Sidebar(
-                    width = sidebarWidth.dp,
-                    items = sidebarItemData,
-                )
+				Box(
+					Modifier.draggable(
+							orientation = Orientation.Horizontal, state = rememberDraggableState { delta ->
+								sidebarWidth += delta.toInt()
+							}).pointerHoverIcon(PointerIcon.Hand).width(8.dp).fillMaxHeight()
+				)
 
-                Box(
-                    Modifier.draggable(
-                        orientation = Orientation.Horizontal,
-                        state = rememberDraggableState { delta ->
-                            sidebarWidth += delta.toInt()
-                        }).pointerHoverIcon(PointerIcon.Hand).width(4.dp).fillMaxHeight()
-                )
+				Box(
+					Modifier.fillMaxSize().background(
+							MaterialTheme.colorScheme.surfaceContainer, MaterialTheme.shapes.medium
+						)
+				) { CurrentScreen() }
+			}
+		}
 
-                Box(
-                    Modifier.fillMaxSize().background(
-                        MaterialTheme.colorScheme.surfaceContainer,
-                        MaterialTheme.shapes.medium
-                    )
-                ) { CurrentScreen() }
-            }
-        }
-
-    }
+	}
 }
 
 
 data class SidebarItemData(
-    val title: String,
-    val icon: ImageVector,
-    val screen: Screen
+	val title: String, val icon: ImageVector, val screen: Screen
 )
 
 @Composable
 fun Sidebar(
-    width: Dp,
-    items: List<SidebarItemData>
+	width: Dp, items: List<SidebarItemData>
 ) {
-    Column(
-        Modifier.fillMaxHeight().width(width)
-    ) {
-        SearchBar(
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = "Search Library"
-        )
+	Column(
+		Modifier.fillMaxHeight().width(width)
+	) {
+		SearchBar(
+			modifier = Modifier.fillMaxWidth(), placeholder = "Search Library"
+		)
 
-        Spacer(modifier = Modifier.height(16.dp))
+		Spacer(modifier = Modifier.height(16.dp))
 
-        Text(
-            text = "LIBRARY",
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+		Text(
+			text = "LIBRARY", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant
+		)
 
-        Spacer(modifier = Modifier.height(8.dp))
+		Spacer(modifier = Modifier.height(8.dp))
 
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(items) { SidebarItem(it) }
-        }
-    }
+		LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+			items(items) { SidebarItem(it) }
+		}
+	}
 }
 
 @Composable
 fun SidebarItem(
-    item: SidebarItemData
+	item: SidebarItemData
 ) {
-    val history: History = koinInject()
+	val history: History = koinInject()
 
-    val handleClick = { history.navigateTo(item.screen) }
+	val handleClick = { history.navigateTo(item.screen) }
 
-    val currentScreen by history.currentScreen.collectAsState()
-    val isSelected by remember { derivedStateOf { currentScreen == item.screen } }
-    val bgColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
-    val color =
-        if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+	val currentScreen by history.currentScreen.collectAsState()
+	val isSelected by remember { derivedStateOf { currentScreen == item.screen } }
+	val bgColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+	val color =
+		if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
 
-    Row(
-        Modifier.fillMaxWidth()
+	Row(
+		Modifier.fillMaxWidth().clip(MaterialTheme.shapes.small).clickable(onClick = handleClick).background(
+				bgColor, MaterialTheme.shapes.small
+			).padding(8.dp), verticalAlignment = Alignment.CenterVertically
+	) {
+		Icon(
+			item.icon, item.title, tint = color
+		)
 
-            .clip(MaterialTheme.shapes.small)
+		Spacer(Modifier.width(8.dp))
 
-            .clickable(onClick = handleClick)
-
-            .background(
-                bgColor,
-                MaterialTheme.shapes.small
-            )
-
-            .padding(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            item.icon,
-            item.title,
-            tint = color
-        )
-
-        Spacer(Modifier.width(8.dp))
-
-        Text(
-            item.title,
-            color = color
-        )
-    }
+		Text(
+			item.title, color = color
+		)
+	}
 }

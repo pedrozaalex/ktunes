@@ -1,33 +1,32 @@
 package com.soaresalex.ktunes.ui.screens.library
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import cafe.adriel.voyager.koin.koinScreenModel
 import com.soaresalex.ktunes.data.models.Artist
 import com.soaresalex.ktunes.screenmodels.LibraryScreenModel
-import com.soaresalex.ktunes.ui.components.LibraryItem
-import com.soaresalex.ktunes.ui.screens.details.ArtistDetailScreen
+import kotlinx.coroutines.flow.StateFlow
 
-object ArtistsScreen : BaseLibraryScreen<Artist>() {
-    @Composable
-    override fun Content() {
-        val screenModel = koinScreenModel<LibraryScreenModel>()
-        val artists by screenModel.artists.collectAsState()
+object ArtistsScreen : LibraryScreen<Artist>() {
+	override fun getScreenTitle() = "Artists"
 
-        LibraryScreenTemplate(
-            screenModel,
-            artists,
-        ) { artist, viewType ->
-            LibraryItem(
-                primaryText = artist.name,
-                secondaryText = "${artist.albumCount} Albums",
-                viewType = viewType,
-                onClick = {
-                    screenModel.history.navigateTo(ArtistDetailScreen(artist))
-                })
-        }
-    }
+	override val getItems: LibraryScreenModel.() -> StateFlow<List<Artist>>
+		get() = { artists }
 
-    override fun getScreenTitle() = "Artists"
+	@Composable
+	override fun GridItemView(item: Artist) {
+//		TODO("Not yet implemented")
+	}
+
+	@Composable
+	override fun ListItemView(item: Artist) {
+//		TODO("Not yet implemented")
+	}
+
+	@Composable
+	override fun TableItemView(item: Artist) {
+//		TODO("Not yet implemented")
+	}
+
+	override fun handleClick(item: Artist) {
+//		TODO("Not yet implemented")
+	}
 }
