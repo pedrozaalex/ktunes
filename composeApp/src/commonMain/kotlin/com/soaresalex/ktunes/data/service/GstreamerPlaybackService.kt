@@ -29,10 +29,13 @@ class GstreamerPlaybackService : PlaybackService {
 	private val job = Job()
 	private val scope = CoroutineScope(coroutineContext + job)
 
-	private var playbin: PlayBin = PlayBin("audio_player")
+	private var playbin: PlayBin
 
 	init {
-		Gst.init("audio_player")
+		Gst.init()
+
+		playbin = PlayBin("playbin")
+
 		playbin.bus.connect(object : Bus.EOS {
 			override fun endOfStream(source: GstObject?) {
 				scope.launch {
