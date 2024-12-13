@@ -38,4 +38,22 @@ interface PlaybackService {
 	 * Stops playback and releases any resources.
 	 */
 	suspend fun stop()
+
+	/**
+	 * Seeks to a specific position within the current track.
+	 *
+	 * @param position The position to seek to, in milliseconds.
+	 */
+	suspend fun seekTo(position: Long)
+
+	/**
+	 * A flow emitting the current playback progress of the track in milliseconds.
+	 */
+	val progress: StateFlow<Long>
+
+	/**
+	 * A flow emitting the current audio level (e.g., for visualization).
+	 * The specific format of this data is implementation-dependent.
+	 */
+	val audioLevel: StateFlow<Float>
 }

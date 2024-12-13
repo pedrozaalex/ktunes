@@ -6,12 +6,10 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import org.freedesktop.gstreamer.Bus
-import org.freedesktop.gstreamer.Gst
-import org.freedesktop.gstreamer.GstObject
-import org.freedesktop.gstreamer.State
+import org.freedesktop.gstreamer.*
 import org.freedesktop.gstreamer.elements.PlayBin
 import java.io.File
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -26,13 +24,19 @@ class GstreamerPlaybackService : PlaybackService {
 	private val _isPlaying = MutableStateFlow(false)
 	override val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
 
+	private val _progress = MutableStateFlow(0L)
+	override val progress: StateFlow<Long> = _progress.asStateFlow()
+
+	private val _audioLevel = MutableStateFlow(0f)
+	override val audioLevel: StateFlow<Float> = _audioLevel.asStateFlow()
+
 	private val job = Job()
 	private val scope = CoroutineScope(coroutineContext + job)
 
 	private var playbin: PlayBin
 
 	init {
-		Gst.init()
+		Gst.init("audio_player")
 
 		playbin = PlayBin("playbin")
 
@@ -54,6 +58,20 @@ class GstreamerPlaybackService : PlaybackService {
 				}
 			}
 		})
+
+		// Periodically update progress and audio level - adjust the interval as needed
+		scope.launch {
+			while (isActive) {
+				if (_isPlaying.value) {
+					_progress.value = playbin.queryPosition(TimeUnit.MILLISECONDS)
+					// Placeholder for audio level extraction - replace with actual implementation
+					// You might need a separate element in the pipeline to analyze audio levels
+					// For now, we just emit a random float between 0 and 1
+					_audioLevel.value = Math.random().toFloat()
+				}
+				delay(250)
+			}
+		}
 	}
 
 	override suspend fun play(track: Track) = withContext(coroutineContext) {
@@ -94,6 +112,13 @@ class GstreamerPlaybackService : PlaybackService {
 		playbin.stop()
 		_isPlaying.value = false
 		_currentTrack.value = null
+		_progress.value = 0
+	}
+
+	override suspend fun seekTo(position: Long) = withContext(coroutineContext) {
+		if (playbin.state == State.PLAYING || playbin.state == State.PAUSED) {
+			playbin.seek(ClockTime.fromMillis(position))
+		}
 	}
 
 	fun dispose() {
