@@ -17,7 +17,7 @@ val appModule = module {
 	singleOf(::NullMetadataService) bind MetadataService::class
 	singleOf(::LocalMediaService) bind MediaService::class
 	singleOf(::LibraryRepository)
-	singleOf(::SourceDataLinePlaybackService) bind PlaybackService::class
+	singleOf(::GstreamerPlaybackService) bind PlaybackService::class
 
 	factoryOf(::LibraryScreenModel)
 }

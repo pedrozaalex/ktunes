@@ -1,11 +1,22 @@
 package com.soaresalex.ktunes.data.service
 
 import com.soaresalex.ktunes.data.models.Track
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * Abstraction for a playback service that handles playing audio tracks.
  */
 interface PlaybackService {
+	/**
+	 * The currently playing track.
+	 */
+	val currentTrack: StateFlow<Track?>
+
+	/**
+	 * Indicates whether a track is currently playing.
+	 */
+	val isPlaying: StateFlow<Boolean>
+
 	/**
 	 * Plays the specified track.
 	 *
@@ -28,4 +39,3 @@ interface PlaybackService {
 	 */
 	suspend fun stop()
 }
-
