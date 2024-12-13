@@ -7,7 +7,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
@@ -99,9 +98,8 @@ object TracksScreen : LibraryScreen<Track>() {
 		}
 	}
 
-	override fun handleClick(item: Track) {
-//		TODO("Not yet implemented")
-	}
+	override val handleClick: LibraryScreenModel.(Track) -> Unit
+		get() = { onPlayTrack(it) }
 
 	@Composable
 	private fun TrackImage(url: String?, contentDescription: String?, shape: Shape, size: Dp) {

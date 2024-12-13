@@ -13,6 +13,8 @@ multiplatformSettings = "1.2.0"
 composeIcons = "1.1.1"
 lifecycle-viewmodel-compose = "2.8.2"
 jaudiotagger = "3.0.1"
+jlayer = "1.0.1"
+jaad = "0.9.4"
 
 [libraries]
 
@@ -46,6 +48,8 @@ multiplatformSettings = { module = "com.russhwolf:multiplatform-settings-no-arg"
 multiplatformSettings-serialization = { module = "com.russhwolf:multiplatform-settings-serialization", version.ref = "multiplatformSettings" }
 composeIcons-featherIcons = { module = "br.com.devsrsouza.compose.icons:feather", version.ref = "composeIcons" }
 jaudiotagger = { module = "net.jthink:jaudiotagger", version.ref = "jaudiotagger" }
+jlayer = { module = "javazoom:jlayer", version.ref = "jlayer" }
+jaad = { module = "com.tianscar.javasound:jaad", version.ref = "jaad" }
 
 [plugins]
 

@@ -26,7 +26,8 @@ object AlbumsScreen : LibraryScreen<Album>() {
 //		TODO("Not yet implemented")
 	}
 
-	override fun handleClick(item: Album) {
-//		TODO("Not yet implemented")
-	}
+	override val handleClick: LibraryScreenModel.(Album) -> Unit
+		get() = {
+//			TODO("Not yet implemented")
+		}
 }

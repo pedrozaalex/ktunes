@@ -26,7 +26,8 @@ object ArtistsScreen : LibraryScreen<Artist>() {
 //		TODO("Not yet implemented")
 	}
 
-	override fun handleClick(item: Artist) {
-//		TODO("Not yet implemented")
-	}
+	override val handleClick: LibraryScreenModel.(Artist) -> Unit
+		get() = {
+//			TODO("Not yet implemented")
+		}
 }

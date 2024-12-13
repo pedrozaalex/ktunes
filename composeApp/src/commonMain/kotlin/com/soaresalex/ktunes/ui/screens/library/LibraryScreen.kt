@@ -152,12 +152,15 @@ abstract class LibraryScreen<T> : Screen {
 	@Composable
 	protected abstract fun TableItemView(item: T)
 
-	abstract fun handleClick(item: T)
+	abstract val handleClick: LibraryScreenModel.(T) -> Unit
 
 	@Composable
 	private fun ItemContainer(item: T, content: @Composable () -> Unit) {
+		val screenModel = koinScreenModel<LibraryScreenModel>()
 		Surface(
-			onClick = { handleClick(item) },
+			onClick = {
+				screenModel.handleClick(item)
+			},
 			color = Color.Transparent,
 		) { content() }
 	}

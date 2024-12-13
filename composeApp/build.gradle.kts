@@ -41,6 +41,8 @@ kotlin {
 			implementation(libs.voyager.koin)
 			implementation(libs.lifecycle.viewmodel.compose)
 			implementation(libs.jaudiotagger)
+			implementation(libs.jlayer)
+			implementation(libs.jaad)
 		}
 
 		commonTest.dependencies {

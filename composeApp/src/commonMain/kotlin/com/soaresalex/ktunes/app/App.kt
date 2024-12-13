@@ -26,12 +26,11 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.CurrentScreen
 import cafe.adriel.voyager.navigator.Navigator
 import com.russhwolf.settings.Settings
+import com.soaresalex.ktunes.data.models.Track
 import com.soaresalex.ktunes.data.observableState
+import com.soaresalex.ktunes.data.service.PlaybackService
 import com.soaresalex.ktunes.theme.AppTheme
-import com.soaresalex.ktunes.ui.components.CloseButton
-import com.soaresalex.ktunes.ui.components.NavigationControls
-import com.soaresalex.ktunes.ui.components.SearchBar
-import com.soaresalex.ktunes.ui.components.SettingsButton
+import com.soaresalex.ktunes.ui.components.*
 import com.soaresalex.ktunes.ui.navigation.History
 import com.soaresalex.ktunes.ui.screens.library.AlbumsScreen
 import com.soaresalex.ktunes.ui.screens.library.ArtistsScreen
@@ -40,15 +39,45 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.Disc
 import compose.icons.feathericons.Music
 import compose.icons.feathericons.Users
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 @Composable
-fun TitleBar() = Row(
-	Modifier.height(40.dp).fillMaxWidth().padding(horizontal = 8.dp), Arrangement.SpaceBetween, Alignment.CenterVertically
+fun TitleBar(
+	scope: CoroutineScope = rememberCoroutineScope()
+) = Row(
+	Modifier.height(40.dp).fillMaxWidth().padding(horizontal = 8.dp),
+	Arrangement.SpaceBetween,
+	Alignment.CenterVertically
 ) {
+	val playbackService: PlaybackService = koinInject()
+
 	Row {
 		NavigationControls()
 	}
+
+	val _currentTrack = MutableStateFlow<Track?>(null)
+	val currentTrack: StateFlow<Track?> = _currentTrack.asStateFlow()
+
+	val _isPlaying = MutableStateFlow<Boolean>(false)
+	val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
+
+	PlaybackControls(
+		currentTrack = currentTrack.value,
+		isPlaying = isPlaying.value,
+		onPlayPauseToggle = {
+			if (isPlaying.value) {
+				scope.launch { playbackService.pause() }
+			} else {
+				currentTrack.value?.let { scope.launch { playbackService.play(it) } }
+			}
+		},
+		onStop = { scope.launch { playbackService.stop() } }
+	)
 
 	Row(verticalAlignment = Alignment.CenterVertically) {
 		SettingsButton()
@@ -98,15 +127,15 @@ fun App(
 
 				Box(
 					Modifier.draggable(
-							orientation = Orientation.Horizontal, state = rememberDraggableState { delta ->
-								sidebarWidth += delta.toInt()
-							}).pointerHoverIcon(PointerIcon.Hand).width(8.dp).fillMaxHeight()
+						orientation = Orientation.Horizontal, state = rememberDraggableState { delta ->
+							sidebarWidth += delta.toInt()
+						}).pointerHoverIcon(PointerIcon.Hand).width(8.dp).fillMaxHeight()
 				)
 
 				Box(
 					Modifier.fillMaxSize().background(
-							MaterialTheme.colorScheme.surfaceContainer, MaterialTheme.shapes.medium
-						)
+						MaterialTheme.colorScheme.surfaceContainer, MaterialTheme.shapes.medium
+					)
 				) { CurrentScreen() }
 			}
 		}
@@ -160,8 +189,8 @@ fun SidebarItem(
 
 	Row(
 		Modifier.fillMaxWidth().clip(MaterialTheme.shapes.small).clickable(onClick = handleClick).background(
-				bgColor, MaterialTheme.shapes.small
-			).padding(8.dp), verticalAlignment = Alignment.CenterVertically
+			bgColor, MaterialTheme.shapes.small
+		).padding(8.dp), verticalAlignment = Alignment.CenterVertically
 	) {
 		Icon(
 			item.icon, item.title, tint = color

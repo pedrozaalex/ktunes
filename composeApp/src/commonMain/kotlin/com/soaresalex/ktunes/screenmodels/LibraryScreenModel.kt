@@ -3,8 +3,9 @@ package com.soaresalex.ktunes.screenmodels
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import com.russhwolf.settings.Settings
+import com.soaresalex.ktunes.data.models.Track
 import com.soaresalex.ktunes.data.repository.LibraryRepository
-import com.soaresalex.ktunes.ui.navigation.History
+import com.soaresalex.ktunes.data.service.PlaybackService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,7 +14,7 @@ import kotlinx.coroutines.launch
 class LibraryScreenModel(
 	private val libraryRepository: LibraryRepository,
 	val settings: Settings,
-	val history: History
+	private val playbackService: PlaybackService
 ) : ScreenModel {
 	val tracks = libraryRepository.tracks
 	val albums = libraryRepository.albums
@@ -38,6 +39,30 @@ class LibraryScreenModel(
 			} finally {
 				_isLoading.value = false
 			}
+		}
+	}
+
+	fun onPlayTrack(track: Track) {
+		screenModelScope.launch {
+			playbackService.play(track)
+		}
+	}
+
+	fun onPauseTrack() {
+		screenModelScope.launch {
+			playbackService.pause()
+		}
+	}
+
+	fun onResumeTrack() {
+		screenModelScope.launch {
+			playbackService.resume()
+		}
+	}
+
+	fun onStopPlayback() {
+		screenModelScope.launch {
+			playbackService.stop()
 		}
 	}
 }
