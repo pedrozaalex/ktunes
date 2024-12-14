@@ -11,7 +11,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -40,6 +39,8 @@ fun PlaybackControls() {
 	val handlePause: () -> Unit = { scope.launch { playbackService.pause() } }
 	val handleSeek: (Long) -> Unit = { position -> scope.launch { playbackService.seekTo(position) } }
 
+	if (currentTrack == null) return
+
 	Row(
 		modifier = Modifier.padding(horizontal = 16.dp).width(500.dp), verticalAlignment = Alignment.CenterVertically
 	) {
@@ -51,10 +52,11 @@ fun PlaybackControls() {
 			Row {
 				IconButton(onClick = {/*TODO*/ }) { Icon(FeatherIcons.SkipBack, "Previous Track") }
 
-				if (isPlaying) {
-					FilledIconButton(onClick = handlePause) { Icon(FeatherIcons.Pause, "Pause") }
-				} else {
-					FilledIconButton(onClick = handlePlay) { Icon(FeatherIcons.Play, "Play") }
+				when {
+					isPlaying -> Triple(handlePause, FeatherIcons.Pause, "Pause")
+					else -> Triple(handlePlay, FeatherIcons.Play, "Play")
+				}.let { (onClick, icon, desc) ->
+					FilledIconButton(onClick) { Icon(icon, desc) }
 				}
 
 				IconButton(onClick = {/*TODO*/ }) { Icon(FeatherIcons.SkipForward, "Next Track") }
@@ -63,24 +65,7 @@ fun PlaybackControls() {
 
 		Spacer(Modifier.width(16.dp))
 
-		SeekBar(progress, currentTrack?.duration ?: 0, handleSeek, isPlaying)
-	}
-}
-
-/**
- * Reusable media control button with consistent styling
- */
-@Composable
-private fun MediaControlButton(
-	icon: ImageVector, contentDescription: String, modifier: Modifier = Modifier, onClick: () -> Unit = {}
-) {
-	IconButton(
-		onClick = onClick,
-		modifier = modifier.padding(4.dp),
-	) {
-		Icon(
-			imageVector = icon, contentDescription = contentDescription, tint = MaterialTheme.colorScheme.onSurface
-		)
+		SeekBar(progress, currentTrack, handleSeek, isPlaying)
 	}
 }
 
@@ -89,7 +74,7 @@ private fun MediaControlButton(
  */
 @Composable
 private fun TrackMetadata(track: Track?) {
-	Box(Modifier.width(200.dp)) {
+	Box {
 		track?.let {
 			Row(horizontalArrangement = Arrangement.End) {
 				AsyncImage(

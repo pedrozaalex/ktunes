@@ -18,6 +18,9 @@ import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastCoerceAtLeast
+import androidx.compose.ui.util.fastCoerceAtMost
+import com.soaresalex.ktunes.data.models.Track
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -25,7 +28,7 @@ import kotlinx.coroutines.launch
  * Advanced SeekBar component for precise audio playback seeking with hover and RTL support
  *
  * @param currentProgress Current playback progress in milliseconds
- * @param totalDuration Total duration of the track in milliseconds
+ * @param track
  * @param onSeek Callback when user seeks to a new position
  * @param isPlaying Whether the track is currently playing
  * @param scope CoroutineScope for handling asynchronous seek operations
@@ -34,7 +37,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SeekBar(
 	currentProgress: Long,
-	totalDuration: Long,
+	track: Track?,
 	onSeek: (Long) -> Unit,
 	isPlaying: Boolean,
 	scope: CoroutineScope = rememberCoroutineScope(),
@@ -51,6 +54,8 @@ fun SeekBar(
 
 	val interactionSource = remember { MutableInteractionSource() }
 	val isHovered by interactionSource.collectIsHoveredAsState()
+
+	val totalDuration = remember { track?.duration ?: 0 }
 
 	val animatedProgressFraction by animateFloatAsState(
 		targetValue = if (totalDuration > 0) currentProgress.toFloat() / totalDuration else 0f,
@@ -76,97 +81,91 @@ fun SeekBar(
 	}
 
 	// Determine displayed position for hover and current states
-	val displayedPosition = hoverPosition?.let {
+	val displayedPosition = if (isHovered) hoverPosition?.let {
 		(it * totalDuration).toLong()
-	} ?: currentProgress
+	} ?: currentProgress else currentProgress
 
 	val density = LocalDensity.current.density
 
-	val seekBarModifier = modifier
-		.fillMaxWidth()
-		.height(barHeight)
-		.clip(RoundedCornerShape(borderRadius))
-		.hoverable(interactionSource)
-		.pointerInput(Unit) {
-			awaitPointerEventScope {
-				while (true) {
-					val event = awaitPointerEvent()
-					val position = event.changes.firstOrNull()
+	val seekBarModifier =
+		modifier.fillMaxWidth().height(barHeight).clip(RoundedCornerShape(borderRadius)).hoverable(interactionSource)
+			.pointerInput(Unit) {
+				awaitPointerEventScope {
+					while (true) {
+						val event = awaitPointerEvent()
+						val position = event.changes.firstOrNull()
 
-					position?.let { pointerInput ->
-						// Calculate hover/seek fraction
-						val localSize = size
-						val localOffset = pointerInput.position
-						val fraction = (localOffset.x / localSize.width).coerceIn(0f, 1f)
+						position?.let { pointerInput ->
+							// Calculate hover/seek fraction
+							val localSize = size
+							val localOffset = pointerInput.position
+							val fraction = (localOffset.x / localSize.width).coerceIn(0f, 1f)
 
-						// Handle hover state
-						if (isHovered) {
-							hoverPosition = fraction
-						}
+							// Handle hover state
+							if (isHovered) {
+								hoverPosition = fraction
+							}
 
-						// Handle seeking
-						if (event.type.toString() == "Press" && isPlaying) {
-							isSeeking = true
-							seekPosition = fraction * totalDuration
-						}
+							// Handle seeking
+							if (event.type.toString() == "Press" && isPlaying) {
+								isSeeking = true
+								seekPosition = fraction * totalDuration
+							}
 
-						// Handle drag
-						if (event.type.toString() == "Move" && isSeeking && isPlaying) {
-							val dragAmount = pointerInput.positionChange().x / density
-							val dragFraction = dragAmount / size.width
+							// Handle drag
+							if (event.type.toString() == "Move" && isSeeking && isPlaying) {
+								val dragAmount = pointerInput.positionChange().x / density
+								val dragFraction = dragAmount / size.width
 
-							seekPosition = (seekPosition + dragFraction * totalDuration)
-								.coerceIn(0f, totalDuration.toFloat())
-						}
+								seekPosition =
+									(seekPosition + dragFraction * totalDuration).coerceIn(0f, totalDuration.toFloat())
+							}
 
-						// Handle release
-						if (event.type.toString() == "Release" && isSeeking) {
-							scope.launch {
-								onSeek(seekPosition.toLong())
-								isSeeking = false
-								hoverPosition = null
+							// Handle release
+							if (event.type.toString() == "Release" && isSeeking) {
+								scope.launch {
+									onSeek(seekPosition.toLong())
+									isSeeking = false
+									hoverPosition = null
+								}
 							}
 						}
 					}
 				}
 			}
-		}
 
 	Column {
 		Box(modifier = seekBarModifier) {
+			val mod = Modifier.clip(MaterialTheme.shapes.large)
+
 			// Background bar
 			Box(
-				modifier = Modifier
-					.fillMaxWidth()
-					.fillMaxHeight()
-					.background(backgroundColor)
+				mod.fillMaxWidth().fillMaxHeight().background(backgroundColor)
 			)
 
-			// Progress bar
-			Box(
-				modifier = Modifier
-					.fillMaxWidth(progressFraction)
-					.fillMaxHeight()
-					.background(activeColor)
-			)
-
-			// Optional hover state overlay
-			hoverPosition?.let { hoverFraction ->
+			if (isHovered && hoverPosition != null) hoverPosition?.let { hoverFraction ->
+				// Progress bar
 				Box(
-					modifier = Modifier
-						.fillMaxWidth(
-							if (hoverFraction <= progressFraction) progressFraction else hoverFraction
-						)
-						.fillMaxHeight()
-						.background(activeColor.copy(alpha = 0.45f))
+					mod.fillMaxWidth(
+						progressFraction.fastCoerceAtMost(hoverFraction)
+					).fillMaxHeight().background(activeColor)
 				)
+
+				// Hover state overlay
+				Box(
+					mod.fillMaxWidth(
+						hoverFraction.fastCoerceAtLeast(progressFraction)
+					).fillMaxHeight().background(activeColor.copy(alpha = 0.45f))
+				)
+			} else {
+				// Progress bar
+				Box(mod.fillMaxWidth(progressFraction).fillMaxHeight().background(activeColor))
 			}
 		}
 
 		// Time labels
 		Row(
-			modifier = Modifier.fillMaxWidth(),
-			horizontalArrangement = Arrangement.SpaceBetween
+			modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
 		) {
 			Text(
 				text = formatTime(displayedPosition, useRemainingTime),
