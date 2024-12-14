@@ -1,87 +1,112 @@
 package com.soaresalex.ktunes.ui.components
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
-/**
- * Improved SeekBar component for precise audio playback seeking
- *
- * @param currentProgress Current playback progress in milliseconds
- * @param totalDuration Total duration of the track in milliseconds
- * @param onSeek Callback when user seeks to a new position
- * @param isPlaying Whether the track is currently playing
- */
 @Composable
 fun SeekBar(
-	currentProgress: Long, totalDuration: Long, onSeek: (Long) -> Unit, isPlaying: Boolean
+	currentProgress: Long,
+	totalDuration: Long,
+	onSeek: (Long) -> Unit,
+	isPlaying: Boolean,
+	scope: CoroutineScope = rememberCoroutineScope(),
+	modifier: Modifier = Modifier,
+	barHeight: Dp = 9.dp,
+	borderRadius: Dp = 6.dp,
+	activeColor: Color = MaterialTheme.colorScheme.primary,
+	backgroundColor: Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+	useRemainingTime: Boolean = false
 ) {
-	var isSeeking by remember { mutableStateOf(false) }
 	var seekPosition by remember { mutableStateOf(currentProgress.toFloat()) }
-	var barWidth by remember { mutableStateOf(0) }
 
-	val progressFraction = if (totalDuration > 0) {
-		if (isSeeking) {
-			seekPosition / totalDuration.toFloat()
-		} else {
-			currentProgress.toFloat() / totalDuration
-		}
-	} else 0f
+	// Simplified progress calculation
+	val progressFraction = calculateProgressFraction(currentProgress, totalDuration)
 
-	val density = LocalDensity.current.density
+	// Simplified time formatting
+	val timeFormatter = remember { TimeFormatter() }
 
-	Box(
-		modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp))
-		.background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)).onSizeChanged { barWidth = it.width }
-		.pointerInput(Unit) {
-			detectTapGestures(
-				onTap = { offset ->
-					if (!isPlaying) return@detectTapGestures
-
-					val fraction = (offset.x / barWidth).coerceIn(0f, 1f)
-					val newPosition = (fraction * totalDuration).toLong()
-					onSeek(newPosition)
-				})
-		}.pointerInput(Unit) {
-
-			detectHorizontalDragGestures(onDragStart = { isSeeking = true }, onDragEnd = {
-				if (!isPlaying) return@detectHorizontalDragGestures
-
-				onSeek(seekPosition.toLong())
-				isSeeking = false
-			}, onHorizontalDrag = { _, dragAmount ->
-				if (!isPlaying) return@detectHorizontalDragGestures
-
-				val adjustedDragAmount = dragAmount / density
-
-				val newPosition = (seekPosition + adjustedDragAmount * totalDuration / barWidth).coerceIn(
-						0f,
-						totalDuration.toFloat()
-					)
-				seekPosition = newPosition
-			})
-		}) {
-		// Progress indicator
+	Column {
+		// Seek bar with simplified gesture handling
 		Box(
-			modifier = Modifier.fillMaxWidth(progressFraction).fillMaxHeight()
-				.background(MaterialTheme.colorScheme.primary)
-		)
+			modifier = modifier
+				.fillMaxWidth()
+				.height(barHeight)
+				.clip(RoundedCornerShape(borderRadius))
+				.pointerInput(totalDuration) {
+					detectTapGestures(
+						onTap = { offset ->
+							if (isPlaying) {
+								val newPosition = (offset.x / size.width * totalDuration).toLong()
+								scope.launch {
+									onSeek(newPosition)
+								}
+							}
+						}
+					)
+				}
+		) {
+			// Background bar
+			Box(
+				modifier = Modifier
+					.fillMaxWidth()
+					.fillMaxHeight()
+					.background(backgroundColor)
+			)
 
-		// Preview indicator (hover state)
-		// Note: Hover state is typically handled differently in Compose
-		// You might need to implement this with a custom overlay or modifier
+			// Progress bar
+			Box(
+				modifier = Modifier
+					.fillMaxWidth(progressFraction)
+					.fillMaxHeight()
+					.background(activeColor)
+			)
+		}
+
+		// Time labels
+		Row(
+			modifier = Modifier.fillMaxWidth(),
+			horizontalArrangement = Arrangement.SpaceBetween
+		) {
+			Text(
+				text = timeFormatter.format(currentProgress, useRemainingTime, totalDuration),
+				style = MaterialTheme.typography.labelSmall,
+				color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+			)
+			Text(
+				text = timeFormatter.format(totalDuration, false),
+				style = MaterialTheme.typography.labelSmall,
+				color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+			)
+		}
 	}
+}
+
+// Simplified time formatting utility
+private class TimeFormatter {
+	fun format(millis: Long, isRemaining: Boolean, total: Long? = null): String {
+		val effectiveMillis = if (isRemaining && total != null) total - millis else millis
+		val totalSeconds = effectiveMillis / 1000
+		val minutes = totalSeconds / 60
+		val seconds = totalSeconds % 60
+		return "%02d:%02d".format(minutes, seconds)
+	}
+}
+
+// Pure function for progress fraction calculation
+private fun calculateProgressFraction(current: Long, total: Long): Float {
+	return if (total > 0) current.toFloat() / total else 0f
 }

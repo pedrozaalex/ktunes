@@ -1,21 +1,17 @@
 package com.soaresalex.ktunes.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -27,7 +23,6 @@ import compose.icons.feathericons.Pause
 import compose.icons.feathericons.Play
 import compose.icons.feathericons.SkipBack
 import compose.icons.feathericons.SkipForward
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
@@ -68,9 +63,7 @@ fun PlaybackControls() {
 
 		Spacer(Modifier.width(16.dp))
 
-		SeekBar(
-			playbackService = playbackService, scope = scope
-		)
+		SeekBar(progress, currentTrack?.duration ?: 0, handleSeek, isPlaying)
 	}
 }
 
@@ -140,65 +133,6 @@ private fun AudioLevelIndicator(level: Float) {
 		Box(
 			modifier = Modifier.fillMaxHeight().fillMaxWidth(level.coerceIn(0f, 1f))
 				.background(MaterialTheme.colorScheme.primary)
-		)
-	}
-}
-
-/**
- * Playback progress slider
- */
-@Composable
-fun SeekBar(
-	playbackService: PlaybackService,
-	scope: CoroutineScope,
-) {
-	val progress by playbackService.progress.collectAsState()
-	val duration by remember { derivedStateOf { playbackService.currentTrack.value?.duration ?: 0 } }
-	val isPlaying by playbackService.isPlaying.collectAsState()
-
-	var isSeeking by remember { mutableStateOf(false) }
-	var seekPosition by remember { mutableStateOf(0f) }
-
-	fun getProgressFraction(): Float {
-		return if (duration > 0) progress.toFloat() / duration else 0f
-	}
-
-	fun getSeekPositionFraction(): Float {
-		return if (duration > 0) seekPosition / duration else 0f
-	}
-
-	Box(
-		modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp))
-		.background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)) // Background color
-		.pointerInput(Unit) {
-			detectTapGestures(
-				onPress = { _ -> isSeeking = true },
-				onTap = { offset ->
-					if (!isPlaying) return@detectTapGestures
-
-					val fraction = (offset.x / size.width).coerceIn(0f, 1f)
-					val newPosition = (fraction * duration).toLong()
-					scope.launch { playbackService.seekTo(newPosition) }
-					isSeeking = false
-				},
-			)
-		}.pointerInput(Unit) {
-			detectHorizontalDragGestures(onDragStart = { isSeeking = true }, onDragEnd = {
-				if (!isPlaying) return@detectHorizontalDragGestures
-
-				scope.launch { playbackService.seekTo(seekPosition.toLong()) }
-				isSeeking = false
-			}, onHorizontalDrag = { _, dragAmount ->
-				if (!isPlaying) return@detectHorizontalDragGestures
-
-				val newPosition = (seekPosition + dragAmount * duration / size.width).coerceIn(0f, duration.toFloat())
-				seekPosition = newPosition
-			})
-		}) {
-		// Filled part of the seek bar
-		Box(
-			modifier = Modifier.fillMaxWidth(if (isSeeking) getSeekPositionFraction() else getProgressFraction())
-				.fillMaxHeight().background(MaterialTheme.colorScheme.primary)
 		)
 	}
 }
