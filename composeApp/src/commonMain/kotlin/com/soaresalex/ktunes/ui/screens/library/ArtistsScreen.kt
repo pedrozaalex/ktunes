@@ -9,7 +9,7 @@ object ArtistsScreen : LibraryScreen<Artist>() {
 	override fun getScreenTitle() = "Artists"
 
 	override val getItems: LibraryScreenModel.() -> StateFlow<List<Artist>>
-		get() = { artists }
+		get() = { repo.artists }
 
 	@Composable
 	override fun GridItemView(item: Artist) {

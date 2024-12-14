@@ -12,14 +12,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class LibraryScreenModel(
-	private val libraryRepository: LibraryRepository,
+	val repo: LibraryRepository,
 	val settings: Settings,
 	private val playbackService: PlaybackService
 ) : ScreenModel {
-	val tracks = libraryRepository.tracks
-	val albums = libraryRepository.albums
-	val artists = libraryRepository.artists
-
 	private val _isLoading = MutableStateFlow(false)
 	val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
@@ -31,9 +27,9 @@ class LibraryScreenModel(
 		screenModelScope.launch {
 			_isLoading.value = true
 			try { // Refresh all library contents
-				libraryRepository.refreshTracks()
-				libraryRepository.refreshAlbums()
-				libraryRepository.refreshArtists()
+				repo.refreshTracks()
+				repo.refreshAlbums()
+				repo.refreshArtists()
 			} catch (e: Exception) { // Handle or log error
 				e.printStackTrace()
 			} finally {

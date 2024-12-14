@@ -2,6 +2,7 @@ package com.soaresalex.ktunes.data.service
 
 import co.touchlab.kermit.Logger
 import com.russhwolf.settings.Settings
+import com.russhwolf.settings.string
 import com.soaresalex.ktunes.data.models.Album
 import com.soaresalex.ktunes.data.models.Artist
 import com.soaresalex.ktunes.data.models.Track
@@ -11,19 +12,13 @@ import org.jaudiotagger.tag.images.Artwork
 import java.io.File
 
 class LocalMediaService(
-	private val metadataService: MetadataService,
-	private val settings: Settings
+	private val metadataService: MetadataService, settings: Settings
 ) : MediaService {
-	private val libraryPath: String
-		get() = settings.getString(
-			LIBRARY_PATH_KEY, defaultLibraryPath()
-		)
+	private var libraryPath by settings.string(LIBRARY_PATH_KEY, defaultLibraryPath())
 
 	fun updateLibraryPath(newPath: String) {
 		require(File(newPath).isDirectory) { "Specified path must be a valid directory" }
-		settings.putString(
-			LIBRARY_PATH_KEY, newPath
-		)
+		libraryPath = newPath
 		scanMediaFiles()
 	}
 
@@ -44,17 +39,13 @@ class LocalMediaService(
 
 	override suspend fun getAlbums(): List<Album> {
 		val tracks = getTracks()
-		return tracks
-			.groupBy { it.album }
-			.map { (albumTitle, albumTracks) ->
+		return tracks.groupBy { it.album }.map { (albumTitle, albumTracks) ->
 				Album(
-					id = albumTitle
-						.hashCode()
-						.toString(),
-					title = albumTitle ?: "Unknown Album",
-					artist = albumTracks.firstOrNull()?.artist ?: "Unknown Artist",
-					releaseYear = albumTracks.firstOrNull()?.year,
-					coverArtUri = albumTracks.firstOrNull()?.albumArtUri,
+					id = albumTitle.hashCode().toString(),
+					title = albumTitle,
+					artist = albumTracks.first().artist,
+					releaseYear = albumTracks.first().year,
+					coverArtUri = albumTracks.first().albumArtUri,
 					trackCount = albumTracks.size,
 					totalDuration = albumTracks.sumOf { it.duration })
 			}
@@ -62,27 +53,18 @@ class LocalMediaService(
 
 	override suspend fun getArtists(): List<Artist> {
 		val tracks = getTracks()
-		return tracks
-			.groupBy { it.artist }
-			.map { (artistName, artistTracks) ->
+		return tracks.groupBy { it.artist }.map { (artistName, artistTracks) ->
 				Artist(
-					id = artistName
-						.hashCode()
-						.toString(),
-					name = artistName ?: "Unknown Artist",
-					albumCount = artistTracks
-						.map { it.album }
-						.distinct().size,
-					trackCount = artistTracks.size
-				)
+					id = artistName.hashCode().toString(),
+					name = artistName,
+					albumCount = artistTracks.map { it.album }.distinct().size,
+					trackCount = artistTracks.size)
 			}
 	}
 
 	private fun scanMediaFiles(): List<File> {
 		val rootDir = File(libraryPath)
-		return rootDir
-			.walkTopDown()
-			.filter { it.isFile && it.extension.lowercase() in SUPPORTED_AUDIO_EXTENSIONS }
+		return rootDir.walkTopDown().filter { it.isFile && it.extension.lowercase() in SUPPORTED_AUDIO_EXTENSIONS }
 			.toList()
 	}
 
@@ -93,9 +75,7 @@ class LocalMediaService(
 		}.getOrNull()
 
 		return Track(
-			id = file.absolutePath
-				.hashCode()
-				.toString(),
+			id = file.absolutePath.hashCode().toString(),
 			title = enhancedMetadata?.title ?: file.nameWithoutExtension,
 			artist = enhancedMetadata?.artist ?: "Unknown Artist",
 			album = enhancedMetadata?.album ?: "Unknown Album",
@@ -111,9 +91,7 @@ class LocalMediaService(
 		return try {
 			MediaFileReader(file).let {
 				Track(
-					id = file.absolutePath
-						.hashCode()
-						.toString(),
+					id = file.absolutePath.hashCode().toString(),
 					title = it.getTitle() ?: file.nameWithoutExtension,
 					artist = it.getArtist() ?: "Unknown Artist",
 					album = it.getAlbum() ?: "Unknown Album",
@@ -137,9 +115,7 @@ class LocalMediaService(
 		private val tag by lazy { audioFile.tag }
 
 		private fun getTagValue(fieldKey: FieldKey): String? {
-			return tag
-				.getFirst(fieldKey)
-				.takeIf { !it.isNullOrBlank() }
+			return tag.getFirst(fieldKey).takeIf { !it.isNullOrBlank() }
 		}
 
 		fun getTitle(): String? = getTagValue(FieldKey.TITLE)
@@ -212,10 +188,7 @@ class LocalMediaService(
 		private const val LIBRARY_PATH_KEY = "library_path"
 
 		private fun defaultLibraryPath(): String = when {
-			System
-				.getProperty("os.name")
-				.lowercase()
-				.contains("win") -> "${System.getProperty("user.home")}\\Music"
+			System.getProperty("os.name").lowercase().contains("win") -> "${System.getProperty("user.home")}\\Music"
 
 			else -> "${System.getProperty("user.home")}/Music"
 		}

@@ -25,7 +25,7 @@ object TracksScreen : LibraryScreen<Track>() {
 	override fun getScreenTitle() = "Tracks"
 
 	override val getItems: LibraryScreenModel.() -> StateFlow<List<Track>>
-		get() = { tracks }
+		get() = { repo.tracks }
 
 
 	@Composable
