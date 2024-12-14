@@ -1,111 +1,75 @@
 package com.soaresalex.ktunes.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import com.soaresalex.ktunes.data.models.Track
+import com.soaresalex.ktunes.data.service.PlaybackService
 import compose.icons.FeatherIcons
-import compose.icons.feathericons.*
+import compose.icons.feathericons.Pause
+import compose.icons.feathericons.Play
+import compose.icons.feathericons.SkipBack
+import compose.icons.feathericons.SkipForward
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 
-/**
- * Comprehensive playback controls component for music player.
- *
- * @param currentTrack Currently playing track
- * @param isPlaying Indicates if music is currently playing
- * @param progress Current playback progress in milliseconds
- * @param onPlayPauseToggle Callback for play/pause action
- * @param onStop Callback for stop action
- * @param onSeek Callback for seeking to a specific position
- * @param onPreviousTrack Callback for previous track navigation
- * @param onNextTrack Callback for next track navigation
- * @param audioLevel Current audio level for visualization
- */
 @Composable
-fun PlaybackControls(
-	currentTrack: Track?,
-	isPlaying: Boolean,
-	progress: Long,
-	onPlayPauseToggle: () -> Unit,
-	onStop: () -> Unit,
-	onSeek: (Long) -> Unit,
-	onPreviousTrack: () -> Unit = {},
-	onNextTrack: () -> Unit = {},
-	audioLevel: Float = 0f
-) {
-	Column(
-		modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-		verticalArrangement = Arrangement.spacedBy(8.dp)
+fun PlaybackControls() {
+	val playbackService: PlaybackService = koinInject()
+
+	val currentTrack by playbackService.currentTrack.collectAsState()
+	val isPlaying by playbackService.isPlaying.collectAsState()
+	val progress by playbackService.progress.collectAsState()
+	val audioLevel by playbackService.audioLevel.collectAsState()
+
+	val scope = rememberCoroutineScope()
+	val handlePlay: () -> Unit = { scope.launch { playbackService.resume() } }
+	val handlePause: () -> Unit = { scope.launch { playbackService.pause() } }
+	val handleSeek: (Long) -> Unit = { position -> scope.launch { playbackService.seekTo(position) } }
+
+	Row(
+		modifier = Modifier.padding(horizontal = 16.dp).width(500.dp), verticalAlignment = Alignment.CenterVertically
 	) {
-		// Track Information and Controls Row
 		Row(
 			verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)
 		) {
-			// Playback Navigation Controls
-			NavigationControls(
-				isPlaying = isPlaying,
-				onPlayPauseToggle = onPlayPauseToggle,
-				onStop = onStop,
-				onPreviousTrack = onPreviousTrack,
-				onNextTrack = onNextTrack
-			)
-
-			// Track Metadata
 			TrackMetadata(currentTrack)
 
-			// Audio Level Visualization
-			AudioLevelIndicator(audioLevel)
+			Row {
+				IconButton(onClick = {/*TODO*/ }) { Icon(FeatherIcons.SkipBack, "Previous Track") }
+
+				if (isPlaying) {
+					FilledIconButton(onClick = handlePause) { Icon(FeatherIcons.Pause, "Pause") }
+				} else {
+					FilledIconButton(onClick = handlePlay) { Icon(FeatherIcons.Play, "Play") }
+				}
+
+				IconButton(onClick = {/*TODO*/ }) { Icon(FeatherIcons.SkipForward, "Next Track") }
+			}
 		}
 
-		// Progress Slider
-		currentTrack?.let { track ->
-			PlaybackProgressSlider(
-				progress = progress, maxProgress = track.duration, onSeek = onSeek
-			)
-		}
-	}
-}
+		Spacer(Modifier.width(16.dp))
 
-/**
- * Composable for navigation and playback control buttons
- */
-@Composable
-private fun NavigationControls(
-	isPlaying: Boolean,
-	onPlayPauseToggle: () -> Unit,
-	onStop: () -> Unit,
-	onPreviousTrack: () -> Unit,
-	onNextTrack: () -> Unit
-) {
-	Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-		// Previous Track Button
-		MediaControlButton(
-			icon = FeatherIcons.SkipBack, contentDescription = "Previous Track", onClick = onPreviousTrack
-		)
-
-		// Play/Pause Button
-		MediaControlButton(
-			icon = if (isPlaying) FeatherIcons.PauseCircle else FeatherIcons.PlayCircle,
-			contentDescription = if (isPlaying) "Pause" else "Play",
-			modifier = Modifier.size(48.dp),
-			onClick = onPlayPauseToggle
-		)
-
-		// Stop Button
-		MediaControlButton(
-			icon = FeatherIcons.StopCircle, contentDescription = "Stop", onClick = onStop
-		)
-
-		// Next Track Button
-		MediaControlButton(
-			icon = FeatherIcons.SkipForward, contentDescription = "Next Track", onClick = onNextTrack
+		SeekBar(
+			playbackService = playbackService, scope = scope
 		)
 	}
 }
@@ -118,13 +82,11 @@ private fun MediaControlButton(
 	icon: ImageVector, contentDescription: String, modifier: Modifier = Modifier, onClick: () -> Unit = {}
 ) {
 	IconButton(
-		onClick = onClick, modifier = modifier.size(40.dp)
+		onClick = onClick,
+		modifier = modifier.padding(4.dp),
 	) {
 		Icon(
-			imageVector = icon,
-			contentDescription = contentDescription,
-			modifier = Modifier.fillMaxSize(),
-			tint = MaterialTheme.colorScheme.onSurface
+			imageVector = icon, contentDescription = contentDescription, tint = MaterialTheme.colorScheme.onSurface
 		)
 	}
 }
@@ -134,23 +96,34 @@ private fun MediaControlButton(
  */
 @Composable
 private fun TrackMetadata(track: Track?) {
-	track?.let {
-		Column(
-			modifier = Modifier.width(200.dp), verticalArrangement = Arrangement.spacedBy(2.dp)
-		) {
-			Text(
-				text = it.title,
-				style = MaterialTheme.typography.bodyMedium,
-				maxLines = 1,
-				overflow = TextOverflow.Ellipsis
-			)
-			Text(
-				text = it.artist,
-				style = MaterialTheme.typography.bodySmall,
-				maxLines = 1,
-				overflow = TextOverflow.Ellipsis,
-				color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-			)
+	Box(Modifier.width(200.dp)) {
+		track?.let {
+			Row(horizontalArrangement = Arrangement.End) {
+				AsyncImage(
+					model = track.albumArtUri,
+					contentDescription = track.album,
+					modifier = Modifier.fillMaxHeight().clip(MaterialTheme.shapes.extraSmall)
+				)
+
+				Spacer(Modifier.size(8.dp))
+
+				Column(modifier = Modifier.fillMaxHeight()) {
+					Text(
+						text = it.title,
+						style = MaterialTheme.typography.labelMedium,
+						fontWeight = FontWeight.Bold,
+						maxLines = 1,
+						overflow = TextOverflow.Ellipsis
+					)
+					Text(
+						text = it.artist,
+						style = MaterialTheme.typography.labelSmall,
+						maxLines = 1,
+						overflow = TextOverflow.Ellipsis,
+						color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+					)
+				}
+			}
 		}
 	}
 }
@@ -175,17 +148,57 @@ private fun AudioLevelIndicator(level: Float) {
  * Playback progress slider
  */
 @Composable
-private fun PlaybackProgressSlider(
-	progress: Long, maxProgress: Long, onSeek: (Long) -> Unit
+fun SeekBar(
+	playbackService: PlaybackService,
+	scope: CoroutineScope,
 ) {
-	Slider(
-		value = progress.toFloat(),
-		onValueChange = { newProgress -> onSeek(newProgress.toLong()) },
-		valueRange = 0f..maxProgress.toFloat(),
-		modifier = Modifier.fillMaxWidth(),
-		colors = SliderDefaults.colors(
-			activeTrackColor = MaterialTheme.colorScheme.primary,
-			inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
+	val progress by playbackService.progress.collectAsState()
+	val duration by remember { derivedStateOf { playbackService.currentTrack.value?.duration ?: 0 } }
+	val isPlaying by playbackService.isPlaying.collectAsState()
+
+	var isSeeking by remember { mutableStateOf(false) }
+	var seekPosition by remember { mutableStateOf(0f) }
+
+	fun getProgressFraction(): Float {
+		return if (duration > 0) progress.toFloat() / duration else 0f
+	}
+
+	fun getSeekPositionFraction(): Float {
+		return if (duration > 0) seekPosition / duration else 0f
+	}
+
+	Box(
+		modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp))
+		.background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)) // Background color
+		.pointerInput(Unit) {
+			detectTapGestures(
+				onPress = { _ -> isSeeking = true },
+				onTap = { offset ->
+					if (!isPlaying) return@detectTapGestures
+
+					val fraction = (offset.x / size.width).coerceIn(0f, 1f)
+					val newPosition = (fraction * duration).toLong()
+					scope.launch { playbackService.seekTo(newPosition) }
+					isSeeking = false
+				},
+			)
+		}.pointerInput(Unit) {
+			detectHorizontalDragGestures(onDragStart = { isSeeking = true }, onDragEnd = {
+				if (!isPlaying) return@detectHorizontalDragGestures
+
+				scope.launch { playbackService.seekTo(seekPosition.toLong()) }
+				isSeeking = false
+			}, onHorizontalDrag = { _, dragAmount ->
+				if (!isPlaying) return@detectHorizontalDragGestures
+
+				val newPosition = (seekPosition + dragAmount * duration / size.width).coerceIn(0f, duration.toFloat())
+				seekPosition = newPosition
+			})
+		}) {
+		// Filled part of the seek bar
+		Box(
+			modifier = Modifier.fillMaxWidth(if (isSeeking) getSeekPositionFraction() else getProgressFraction())
+				.fillMaxHeight().background(MaterialTheme.colorScheme.primary)
 		)
-	)
+	}
 }

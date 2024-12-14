@@ -27,7 +27,6 @@ import cafe.adriel.voyager.navigator.CurrentScreen
 import cafe.adriel.voyager.navigator.Navigator
 import com.russhwolf.settings.Settings
 import com.soaresalex.ktunes.data.observableState
-import com.soaresalex.ktunes.data.service.PlaybackService
 import com.soaresalex.ktunes.theme.AppTheme
 import com.soaresalex.ktunes.ui.components.*
 import com.soaresalex.ktunes.ui.navigation.History
@@ -38,39 +37,19 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.Disc
 import compose.icons.feathericons.Music
 import compose.icons.feathericons.Users
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 @Composable
-fun TitleBar(
-	scope: CoroutineScope = rememberCoroutineScope()
-) = Row(
-	Modifier.height(40.dp).fillMaxWidth().padding(horizontal = 8.dp),
+fun TitleBar() = Row(
+	Modifier.height(48.dp).fillMaxWidth().padding(horizontal = 8.dp),
 	Arrangement.SpaceBetween,
 	Alignment.CenterVertically
 ) {
-	val playbackService: PlaybackService = koinInject()
-
 	Row {
 		NavigationControls()
 	}
 
-	PlaybackControls(
-		currentTrack = playbackService.currentTrack.value,
-		isPlaying = playbackService.isPlaying.value,
-		progress = playbackService.progress.value,
-		onPlayPauseToggle = {
-			if (playbackService.isPlaying.value) {
-				scope.launch { playbackService.pause() }
-			} else {
-				playbackService.currentTrack.value?.let { scope.launch { playbackService.play(it) } }
-			}
-		},
-		onStop = { scope.launch { playbackService.stop() } },
-		onSeek = { scope.launch { playbackService.seekTo(it) } },
-		audioLevel = playbackService.audioLevel.value
-	)
+	PlaybackControls()
 
 	Row(verticalAlignment = Alignment.CenterVertically) {
 		SettingsButton()
