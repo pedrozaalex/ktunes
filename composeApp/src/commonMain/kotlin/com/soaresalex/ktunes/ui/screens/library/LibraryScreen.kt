@@ -68,7 +68,6 @@ abstract class LibraryScreen<T> : Screen {
 						)
 
 						Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-							// Filter Button
 							OutlinedButton(
 								onClick = { isFilterExpanded = !isFilterExpanded },
 								modifier = Modifier.height(30.dp),
@@ -76,44 +75,52 @@ abstract class LibraryScreen<T> : Screen {
 							) {
 								Icon(
 									imageVector = FeatherIcons.Search,
-									contentDescription = "Filter",
+									contentDescription = "Search ${getScreenTitle()}"
 								)
 							}
 
-							OutlinedButton(
-								onClick = { isSortExpanded = !isSortExpanded },
-								modifier = Modifier.height(30.dp),
-								contentPadding = ButtonDefaults.TextButtonWithIconContentPadding
-							) {
-								Text(selectedSortOption ?: "Sort By", style = MaterialTheme.typography.bodySmall)
-								Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-								Icon(
-									imageVector = Icons.Default.ArrowDropDown,
-									contentDescription = "Sort",
-								)
-							}
-							DropdownMenu(
-								expanded = isSortExpanded, onDismissRequest = { isSortExpanded = false }) {
-								sortOptions.forEach { option ->
-									DropdownMenuItem(text = { Text(option) }, onClick = {
-										selectedSortOption = option
-										isSortExpanded = false
-										updateSort(screenModel, option, isSortAscending)
-									})
+							Box {
+								OutlinedButton(
+									onClick = { isSortExpanded = !isSortExpanded },
+									modifier = Modifier.height(30.dp),
+									contentPadding = ButtonDefaults.TextButtonWithIconContentPadding
+								) {
+									Text(selectedSortOption ?: "Sort By", style = MaterialTheme.typography.bodySmall)
+									Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+									Icon(
+										imageVector = if (isSortAscending) FeatherIcons.ArrowUp else FeatherIcons.ArrowDown,
+										contentDescription = if (isSortAscending) "Ascending" else "Descending"
+									)
 								}
-							}
-
-							// Separate button for sorting order
-							IconButton(onClick = {
-								isSortAscending = !isSortAscending
-								selectedSortOption?.let {
-									updateSort(screenModel, it, isSortAscending)
+								DropdownMenu(
+									expanded = isSortExpanded,
+									onDismissRequest = { isSortExpanded = false },
+									tonalElevation = 16.dp,
+									shadowElevation = 8.dp,
+								) {
+									sortOptions.forEach { option ->
+										DropdownMenuItem(
+											text = { Text(option) },
+											onClick = {
+												selectedSortOption = option
+												updateSort(screenModel, option, isSortAscending)
+											},
+											trailingIcon = {
+												if (selectedSortOption == option) {
+													IconButton(onClick = {
+														isSortAscending = !isSortAscending
+														updateSort(screenModel, option, isSortAscending)
+													}, Modifier.size(30.dp)) {
+														Icon(
+															imageVector = if (isSortAscending) FeatherIcons.ArrowUp else FeatherIcons.ArrowDown,
+															contentDescription = if (isSortAscending) "Ascending" else "Descending"
+														)
+													}
+												}
+											}
+										)
+									}
 								}
-							}, Modifier.size(30.dp)) {
-								Icon(
-									imageVector = if (isSortAscending) FeatherIcons.ArrowUp else FeatherIcons.ArrowDown,
-									contentDescription = if (isSortAscending) "Ascending" else "Descending"
-								)
 							}
 
 							SingleChoiceSegmentedButtonRow(

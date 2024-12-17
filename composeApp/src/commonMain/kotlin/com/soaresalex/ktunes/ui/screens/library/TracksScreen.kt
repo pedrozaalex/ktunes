@@ -8,7 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
@@ -57,7 +56,7 @@ object TracksScreen : LibraryScreen<Track>() {
 		Column(
 			modifier = Modifier.padding(8.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally
 		) {
-			TrackImage(item.albumArtUri, item.title, MaterialTheme.shapes.medium, 120.dp)
+			TrackImage(item.albumArtUri, item.title, 120.dp)
 			Spacer(modifier = Modifier.height(8.dp))
 			Text(
 				item.title, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis
@@ -75,7 +74,7 @@ object TracksScreen : LibraryScreen<Track>() {
 	@Composable
 	override fun ListItemView(item: Track) {
 		Row(Modifier.padding(8.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-			TrackImage(item.albumArtUri, item.title, MaterialTheme.shapes.medium, 80.dp)
+			TrackImage(item.albumArtUri, item.title, 80.dp)
 			Spacer(Modifier.width(8.dp))
 			Column(Modifier.weight(1f)) {
 				Text(
@@ -101,7 +100,7 @@ object TracksScreen : LibraryScreen<Track>() {
 			Modifier.padding(horizontal = 8.dp, vertical = 4.dp).fillMaxWidth(),
 			verticalAlignment = Alignment.CenterVertically
 		) {
-			TrackImage(item.albumArtUri, item.title, MaterialTheme.shapes.small, 80.dp)
+			TrackImage(item.albumArtUri, item.title, 80.dp)
 			Spacer(Modifier.width(8.dp))
 			Text(
 				item.title,
@@ -125,7 +124,7 @@ object TracksScreen : LibraryScreen<Track>() {
 	override val handleClick = LibraryScreenModel::onLibraryTrackClick
 
 	@Composable
-	private fun TrackImage(url: String?, contentDescription: String?, shape: Shape, size: Dp) {
+	private fun TrackImage(url: String?, contentDescription: String?, size: Dp) {
 		when (url) {
 			null -> {
 				Icon(
@@ -139,7 +138,7 @@ object TracksScreen : LibraryScreen<Track>() {
 				AsyncImage(
 					url,
 					contentDescription,
-					Modifier.size(size).clip(shape),
+					Modifier.size(size),
 					contentScale = ContentScale.Crop,
 					placeholder = rememberVectorPainter(FeatherIcons.Music),
 					fallback = rememberVectorPainter(FeatherIcons.Music),

@@ -82,7 +82,8 @@ fun App(
 										icon = { Icon(it.icon, it.title) },
 										label = { Text(it.title) },
 										selected = history.currentScreen.collectAsState().value == it.screen,
-										onClick = { history.navigateTo(it.screen) }
+										onClick = { history.navigateTo(it.screen) },
+										modifier = Modifier.height(40.dp).padding(2.dp)
 									)
 								}
 							}
