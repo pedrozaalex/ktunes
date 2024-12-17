@@ -72,7 +72,7 @@ fun App(
 				Box(
 					Modifier.fillMaxSize().background(
 						MaterialTheme.colorScheme.surfaceContainer, MaterialTheme.shapes.medium
-					)
+					).clip(MaterialTheme.shapes.medium)
 				) { CurrentScreen() }
 			}
 		}

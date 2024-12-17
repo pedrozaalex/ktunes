@@ -9,11 +9,14 @@ import com.soaresalex.ktunes.data.models.Track
 import com.soaresalex.ktunes.data.repository.LibraryRepository
 import com.soaresalex.ktunes.data.service.PlayQueueService
 import com.soaresalex.ktunes.data.service.PlaybackService
+import com.soaresalex.ktunes.interfaces.SortOrder
+import com.soaresalex.ktunes.interfaces.filterItems
+import com.soaresalex.ktunes.interfaces.sortItems
 import com.soaresalex.ktunes.ui.navigation.History
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.text.Collator
-import java.util.Locale
+import java.util.*
 
 class LibraryScreenModel(
 	val settings: Settings,
@@ -22,9 +25,6 @@ class LibraryScreenModel(
 	private val playbackService: PlaybackService,
 	private val playQueueService: PlayQueueService
 ) : ScreenModel {
-	// Sorting and filtering enums
-	enum class SortOrder { ASCENDING, DESCENDING }
-
 	enum class TrackSortBy {
 		TITLE, ARTIST, ALBUM, DURATION
 	}
@@ -58,29 +58,22 @@ class LibraryScreenModel(
 	val artistSortBy: StateFlow<ArtistSortBy> = _artistSortBy.asStateFlow()
 	val artistSortOrder: StateFlow<SortOrder> = _artistSortOrder.asStateFlow()
 
-	// Filtered and sorted library contents
-	val filteredTracks = libraryRepository.tracks.combine(_trackNameFilter) { tracks, filter ->
-		filter?.let {
-			tracks.filter { it.title.contains(filter, ignoreCase = true) }
-		} ?: tracks
-	}.map { tracks ->
-		sortTracks(tracks, _trackSortBy.value, _trackSortOrder.value)
+	val filteredSortedTracks = combine(
+		libraryRepository.tracks, _trackNameFilter, trackSortBy, trackSortOrder
+	) { tracks, filter, sortBy, sortOrder ->
+		tracks.filterItems(filter).sortItems(sortBy.toString(), sortOrder)
 	}
 
-	val filteredAlbums = libraryRepository.albums.combine(_albumNameFilter) { albums, filter ->
-		filter?.let {
-			albums.filter { it.title.contains(filter, ignoreCase = true) }
-		} ?: albums
-	}.map { albums ->
-		sortAlbums(albums, _albumSortBy.value, _albumSortOrder.value)
+	val filteredSortedAlbums = combine(
+		libraryRepository.albums, _albumNameFilter, albumSortBy, albumSortOrder
+	) { albums, filter, sortBy, sortOrder ->
+		albums.filterItems(filter).sortItems(sortBy.toString(), sortOrder)
 	}
 
-	val filteredArtists = libraryRepository.artists.combine(_artistNameFilter) { artists, filter ->
-		filter?.let {
-			artists.filter { it.name.contains(filter, ignoreCase = true) }
-		} ?: artists
-	}.map { artists ->
-		sortArtists(artists, _artistSortBy.value, _artistSortOrder.value)
+	val filteredSortedArtists = combine(
+		libraryRepository.artists, _artistNameFilter, artistSortBy, artistSortOrder
+	) { artists, filter, sortBy, sortOrder ->
+		artists.filterItems(filter).sortItems(sortBy.toString(), sortOrder)
 	}
 
 	private val _isLoading = MutableStateFlow(false)
@@ -179,15 +172,19 @@ class LibraryScreenModel(
 		}
 	}
 
+	// Put current tracks into the play queue and start playback
 	fun onLibraryTrackClick(clicked: Track) {
-		val tracks = libraryRepository.tracks.value
-		val index = tracks.indexOf(clicked)
+		screenModelScope.launch {
+			val tracks = filteredSortedTracks.first()
 
-		if (index == -1) {
-			throw IllegalArgumentException("Track not found in library")
+			val index = tracks.indexOf(clicked)
+
+			if (index == -1) {
+				throw IllegalArgumentException("Track not found in library")
+			}
+
+			executePlaybackAction { playFromTrackList(tracks, index) }
 		}
-
-		executePlaybackAction { playFromTrackList(tracks, index) }
 	}
 
 	fun onPause() {

@@ -17,12 +17,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.soaresalex.ktunes.data.models.Track
+import com.soaresalex.ktunes.interfaces.SortOrder
 import com.soaresalex.ktunes.screenmodels.LibraryScreenModel
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Music
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 
 object TracksScreen : LibraryScreen<Track>() {
 	override fun getSortOptions(): List<String> = listOf("Title", "Artist", "Album", "Duration")
@@ -38,8 +36,8 @@ object TracksScreen : LibraryScreen<Track>() {
 			"Duration" -> LibraryScreenModel.TrackSortBy.DURATION
 			else -> LibraryScreenModel.TrackSortBy.TITLE
 		}
-		val sortOrder = if (isAscending) LibraryScreenModel.SortOrder.ASCENDING
-		else LibraryScreenModel.SortOrder.DESCENDING
+		val sortOrder = if (isAscending) SortOrder.ASCENDING
+		else SortOrder.DESCENDING
 
 		screenModel.updateTrackSort(sortBy, sortOrder)
 	}
@@ -52,7 +50,7 @@ object TracksScreen : LibraryScreen<Track>() {
 
 	override fun getScreenTitle() = "Tracks"
 
-	override val getItems = LibraryScreenModel::filteredTracks
+	override val getItems = LibraryScreenModel::filteredSortedTracks
 
 	@Composable
 	override fun GridItemView(item: Track) {
@@ -125,22 +123,6 @@ object TracksScreen : LibraryScreen<Track>() {
 	}
 
 	override val handleClick = LibraryScreenModel::onLibraryTrackClick
-
-	override fun getSelectedSortOption(): StateFlow<String> {
-		// Assuming the first option is the default
-		val defaultSortOption = getSortOptions().firstOrNull() ?: ""
-		val selectedSortOption = MutableStateFlow(defaultSortOption)
-		// Update selectedSortOption based on the actual selection in the screen model
-		// This is a placeholder; you should replace it with the actual logic to get the selected sort option
-		return selectedSortOption
-	}
-
-	override fun getSelectedSortOrder(): StateFlow<Boolean> {
-		val isAscending = MutableStateFlow(true)
-		// Update isAscending based on the actual selection in the screen model
-		// This is a placeholder; you should replace it with the actual logic to get the selected sort order
-		return isAscending
-	}
 
 	@Composable
 	private fun TrackImage(url: String?, contentDescription: String?, shape: Shape, size: Dp) {
