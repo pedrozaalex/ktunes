@@ -21,6 +21,8 @@ import com.soaresalex.ktunes.screenmodels.LibraryScreenModel
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Music
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 object TracksScreen : LibraryScreen<Track>() {
 	override fun getSortOptions(): List<String> = listOf("Title", "Artist", "Album", "Duration")
@@ -123,6 +125,22 @@ object TracksScreen : LibraryScreen<Track>() {
 	}
 
 	override val handleClick = LibraryScreenModel::onLibraryTrackClick
+
+	override fun getSelectedSortOption(): StateFlow<String> {
+		// Assuming the first option is the default
+		val defaultSortOption = getSortOptions().firstOrNull() ?: ""
+		val selectedSortOption = MutableStateFlow(defaultSortOption)
+		// Update selectedSortOption based on the actual selection in the screen model
+		// This is a placeholder; you should replace it with the actual logic to get the selected sort option
+		return selectedSortOption
+	}
+
+	override fun getSelectedSortOrder(): StateFlow<Boolean> {
+		val isAscending = MutableStateFlow(true)
+		// Update isAscending based on the actual selection in the screen model
+		// This is a placeholder; you should replace it with the actual logic to get the selected sort order
+		return isAscending
+	}
 
 	@Composable
 	private fun TrackImage(url: String?, contentDescription: String?, shape: Shape, size: Dp) {

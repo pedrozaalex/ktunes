@@ -12,6 +12,8 @@ import com.soaresalex.ktunes.data.service.PlaybackService
 import com.soaresalex.ktunes.ui.navigation.History
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.text.Collator
+import java.util.Locale
 
 class LibraryScreenModel(
 	val settings: Settings,
@@ -107,13 +109,19 @@ class LibraryScreenModel(
 	// Sorting helper methods
 	private fun sortTracks(
 		tracks: List<Track>, sortBy: TrackSortBy, sortOrder: SortOrder
-	): List<Track> = when (sortBy) {
-		TrackSortBy.TITLE -> tracks.sortedBy { it.title }
-		TrackSortBy.ARTIST -> tracks.sortedBy { it.artist }
-		TrackSortBy.ALBUM -> tracks.sortedBy { it.album }
-		TrackSortBy.DURATION -> tracks.sortedBy { it.duration }
-	}.let {
-		if (sortOrder == SortOrder.DESCENDING) it.reversed() else it
+	): List<Track> {
+		val collator = Collator.getInstance(Locale.getDefault()).apply {
+			strength = Collator.PRIMARY // Ignore case and diacritics
+		}
+
+		return when (sortBy) {
+			TrackSortBy.TITLE -> tracks.sortedWith(compareBy(collator) { it.title })
+			TrackSortBy.ARTIST -> tracks.sortedWith(compareBy(collator) { it.artist })
+			TrackSortBy.ALBUM -> tracks.sortedWith(compareBy(collator) { it.album })
+			TrackSortBy.DURATION -> tracks.sortedBy { it.duration }
+		}.let {
+			if (sortOrder == SortOrder.DESCENDING) it.reversed() else it
+		}
 	}
 
 	private fun sortAlbums(

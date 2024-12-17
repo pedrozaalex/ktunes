@@ -24,6 +24,8 @@ import compose.icons.feathericons.Layout
 import compose.icons.feathericons.List
 import compose.icons.feathericons.Search
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 abstract class LibraryScreen<T> : Screen {
 	@Composable
@@ -43,8 +45,13 @@ abstract class LibraryScreen<T> : Screen {
 
 		// Define sort options based on the specific library type (to be implemented in subclasses)
 		val sortOptions = remember { getSortOptions() }
-		var selectedSortOption by remember { mutableStateOf(sortOptions.first()) }
-		var isSortAscending by remember { mutableStateOf(true) }
+		// Get the currently selected sort option and order from the screen model
+		val selectedSortOptionState = remember { getSelectedSortOption() }
+		val selectedSortOrderState = remember { getSelectedSortOrder() }
+
+		// Collect the state as mutable state for recomposition
+		var selectedSortOption = selectedSortOptionState.collectAsState().value
+		var isSortAscending = selectedSortOrderState.collectAsState().value
 
 		Column(modifier = Modifier.fillMaxSize()) {
 			// Title Bar with View Type, Search, and Sort Controls
@@ -84,7 +91,7 @@ abstract class LibraryScreen<T> : Screen {
 							DropdownMenuItem(
 								text = { Text(sortOption) },
 								onClick = {
-									selectedSortOption = sortOption
+									selectedSortOption = sortOption // Update the selected sort option state
 									isSortExpanded = false
 									// Call sort method in screen model
 									updateSort(screenModel, sortOption, isSortAscending)
@@ -99,7 +106,7 @@ abstract class LibraryScreen<T> : Screen {
 								Text(if (isSortAscending) "Descending" else "Ascending")
 							},
 							onClick = {
-								isSortAscending = !isSortAscending
+								isSortAscending = !isSortAscending // Update the sort order state
 								isSortExpanded = false
 								// Call sort method in screen model with new order
 								updateSort(screenModel, selectedSortOption, isSortAscending)
@@ -221,7 +228,6 @@ abstract class LibraryScreen<T> : Screen {
 		filterQuery: String
 	)
 
-	// Existing abstract methods remain unchanged
 	protected abstract fun getScreenTitle(): String
 
 	abstract val getItems: LibraryScreenModel.() -> Flow<List<T>>
@@ -247,6 +253,9 @@ abstract class LibraryScreen<T> : Screen {
 			color = Color.Transparent,
 		) { content() }
 	}
+
+	protected abstract fun getSelectedSortOption(): StateFlow<String>
+	protected abstract fun getSelectedSortOrder(): StateFlow<Boolean>
 }
 
 enum class LibraryViewType(val displayName: String) {

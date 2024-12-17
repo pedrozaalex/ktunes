@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import com.soaresalex.ktunes.data.models.Artist
 import com.soaresalex.ktunes.screenmodels.LibraryScreenModel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 
 object ArtistsScreen : LibraryScreen<Artist>() {
 	override fun getSortOptions(): List<String> {
@@ -49,4 +50,12 @@ object ArtistsScreen : LibraryScreen<Artist>() {
 		get() = {
 //			TODO("Not yet implemented")
 		}
+
+	override fun getSelectedSortOption(): StateFlow<String> {
+		TODO("Not yet implemented")
+	}
+
+	override fun getSelectedSortOrder(): StateFlow<Boolean> {
+		TODO("Not yet implemented")
+	}
 }
