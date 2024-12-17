@@ -29,7 +29,7 @@ abstract class LibraryScreen<T> : Screen {
 	@Composable
 	override fun Content() {
 		val screenModel = koinScreenModel<LibraryScreenModel>()
-		val data = getItems(screenModel).collectAsState(emptyList()).value
+		val data = screenModel.getItems().collectAsState(emptyList()).value
 		val isLoading by screenModel.isLoading.collectAsState()
 
 		var selectedViewType by screenModel.settings.observableState(
@@ -224,7 +224,7 @@ abstract class LibraryScreen<T> : Screen {
 	// Existing abstract methods remain unchanged
 	protected abstract fun getScreenTitle(): String
 
-	abstract fun getItems(model: LibraryScreenModel): Flow<List<T>>
+	abstract val getItems: LibraryScreenModel.() -> Flow<List<T>>
 
 	@Composable
 	protected abstract fun GridItemView(item: T)

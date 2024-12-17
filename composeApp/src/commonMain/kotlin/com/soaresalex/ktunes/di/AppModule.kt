@@ -18,6 +18,8 @@ val appModule = module {
 	singleOf(::LocalMediaService) bind MediaService::class
 	singleOf(::LibraryRepository)
 	singleOf(::GstreamerPlaybackService) bind PlaybackService::class
+	singleOf(::PlayQueueServiceImpl) bind PlayQueueService::class
+	single { ListeningHistoryServiceImpl(capacity = 50) } bind ListeningHistoryService::class
 
 	factoryOf(::LibraryScreenModel)
 }

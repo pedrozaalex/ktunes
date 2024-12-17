@@ -50,9 +50,7 @@ object TracksScreen : LibraryScreen<Track>() {
 
 	override fun getScreenTitle() = "Tracks"
 
-	override fun getItems(model: LibraryScreenModel): Flow<List<Track>> {
-		return model.filteredTracks
-	}
+	override val getItems = LibraryScreenModel::filteredTracks
 
 	@Composable
 	override fun GridItemView(item: Track) {
@@ -124,8 +122,7 @@ object TracksScreen : LibraryScreen<Track>() {
 		}
 	}
 
-	override val handleClick: LibraryScreenModel.(Track) -> Unit
-		get() = { onPlayTrack(it) }
+	override val handleClick = LibraryScreenModel::onLibraryTrackClick
 
 	@Composable
 	private fun TrackImage(url: String?, contentDescription: String?, shape: Shape, size: Dp) {

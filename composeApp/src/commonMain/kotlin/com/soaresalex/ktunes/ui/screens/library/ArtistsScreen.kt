@@ -28,9 +28,7 @@ object ArtistsScreen : LibraryScreen<Artist>() {
 
 	override fun getScreenTitle() = "Artists"
 
-	override fun getItems(model: LibraryScreenModel): Flow<List<Artist>> {
-		return model.filteredArtists
-	}
+	override val getItems = LibraryScreenModel::filteredArtists
 
 	@Composable
 	override fun GridItemView(item: Artist) {

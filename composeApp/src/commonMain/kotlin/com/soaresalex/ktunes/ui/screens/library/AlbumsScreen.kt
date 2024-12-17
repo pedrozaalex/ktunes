@@ -12,25 +12,20 @@ object AlbumsScreen : LibraryScreen<Album>() {
 	}
 
 	override fun updateSort(
-		screenModel: LibraryScreenModel,
-		sortOption: String,
-		isAscending: Boolean
+		screenModel: LibraryScreenModel, sortOption: String, isAscending: Boolean
 	) {
 //		TODO("Not yet implemented")
 	}
 
 	override fun updateFilter(
-		screenModel: LibraryScreenModel,
-		filterQuery: String
+		screenModel: LibraryScreenModel, filterQuery: String
 	) {
 //		TODO("Not yet implemented")
 	}
 
 	override fun getScreenTitle() = "Albums"
 
-	override fun getItems(model: LibraryScreenModel): Flow<List<Album>> {
-		return model.filteredAlbums
-	}
+	override val getItems = LibraryScreenModel::filteredAlbums
 
 	@Composable
 	override fun GridItemView(item: Album) {

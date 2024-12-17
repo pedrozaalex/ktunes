@@ -18,6 +18,7 @@ import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
 import coil3.toBitmap
 import com.soaresalex.ktunes.data.models.Track
+import com.soaresalex.ktunes.data.service.PlayQueueService
 import com.soaresalex.ktunes.data.service.PlaybackService
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Pause
@@ -32,16 +33,29 @@ import kotlin.math.min
 @Composable
 fun PlaybackControls() {
 	val playbackService: PlaybackService = koinInject()
+	val playQueueService: PlayQueueService = koinInject()
 
 	val currentTrack by playbackService.currentTrack.collectAsState()
 	val isPlaying by playbackService.isPlaying.collectAsState()
 	val progress by playbackService.progress.collectAsState()
 	val audioLevel by playbackService.audioLevel.collectAsState()
+	val currentQueue by playQueueService.queue.collectAsState()
+	val currentTrackIndex by playQueueService.currentTrackIndex.collectAsState()
 
 	val scope = rememberCoroutineScope()
 	val handlePlay: () -> Unit = { scope.launch { playbackService.resume() } }
 	val handlePause: () -> Unit = { scope.launch { playbackService.pause() } }
 	val handleSeek: (Long) -> Unit = { position -> scope.launch { playbackService.seekTo(position) } }
+	val handleNext: () -> Unit = {
+		scope.launch {
+			playbackService.playNext()
+		}
+	}
+	val handlePrevious: () -> Unit = {
+		scope.launch {
+			playbackService.playPrevious()
+		}
+	}
 
 	currentTrack?.let { track ->
 		Row(
@@ -54,7 +68,7 @@ fun PlaybackControls() {
 				TrackMetadata(track)
 
 				Row {
-					IconButton(onClick = {/*TODO*/ }) { Icon(FeatherIcons.SkipBack, "Previous Track") }
+					IconButton(onClick = handlePrevious) { Icon(FeatherIcons.SkipBack, "Previous Track") }
 
 					when {
 						isPlaying -> Triple(handlePause, FeatherIcons.Pause, "Pause")
@@ -63,7 +77,7 @@ fun PlaybackControls() {
 						FilledIconButton(onClick) { Icon(icon, desc) }
 					}
 
-					IconButton(onClick = {/*TODO*/ }) { Icon(FeatherIcons.SkipForward, "Next Track") }
+					IconButton(onClick = handleNext) { Icon(FeatherIcons.SkipForward, "Next Track") }
 				}
 			}
 
@@ -158,7 +172,7 @@ private fun TrackMetadata(track: Track) {
 				calculateContrastRatio(baseColor, contrastingColor) >= minContrastRatio
 			}
 		}
-		
+
 		/**
 		 * Calculate relative luminance of a color according to WCAG 2 standards
 		 * @param color The color to calculate luminance for

@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.freedesktop.gstreamer.*
 import org.freedesktop.gstreamer.elements.PlayBin
+import org.koin.core.component.KoinComponent
 import java.io.File
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
@@ -15,7 +16,10 @@ import kotlin.coroutines.CoroutineContext
 /**
  * Implementation of [PlaybackService] using GStreamer's [PlayBin] element for audio playback.
  */
-class GstreamerPlaybackService : PlaybackService {
+class GstreamerPlaybackService(
+	override val playQueueService: PlayQueueService
+) : PlaybackService(playQueueService), KoinComponent {
+
 	private val coroutineContext: CoroutineContext = Dispatchers.IO
 
 	private val _currentTrack = MutableStateFlow<Track?>(null)
@@ -35,6 +39,7 @@ class GstreamerPlaybackService : PlaybackService {
 
 	private var playbin: PlayBin
 
+
 	init {
 		Gst.init("audio_player")
 
@@ -44,7 +49,7 @@ class GstreamerPlaybackService : PlaybackService {
 			override fun endOfStream(source: GstObject?) {
 				scope.launch {
 					_isPlaying.value = false
-					_currentTrack.value = null
+					playNext()
 				}
 			}
 		})
@@ -74,10 +79,12 @@ class GstreamerPlaybackService : PlaybackService {
 		}
 	}
 
-	override suspend fun play(track: Track) = withContext(coroutineContext) {
-		if (_isPlaying.value && currentTrack.value == track) {
-			resume()
-			return@withContext
+	override suspend fun playQueued(index: Int) {
+		val track = playQueueService.queue.value.getOrNull(index)
+
+		if (track == null) {
+			Logger.e { "Track not found in queue" }
+			return
 		}
 
 		stop()
@@ -93,6 +100,19 @@ class GstreamerPlaybackService : PlaybackService {
 			_currentTrack.value = null
 		}
 	}
+
+	override suspend fun playFromTrackList(context: List<Track>, index: Int, description: String) =
+		withContext(coroutineContext) {
+			val track = context[index]
+
+			if (_isPlaying.value && currentTrack.value == track) {
+				resume()
+				return@withContext
+			}
+
+			super.playFromTrackList(context, index, description)
+			playQueued(index)
+		}
 
 	override suspend fun pause() = withContext(coroutineContext) {
 		if (playbin.state == State.PLAYING) {

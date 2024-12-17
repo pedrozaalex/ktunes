@@ -7,6 +7,7 @@ import com.soaresalex.ktunes.data.models.Album
 import com.soaresalex.ktunes.data.models.Artist
 import com.soaresalex.ktunes.data.models.Track
 import com.soaresalex.ktunes.data.repository.LibraryRepository
+import com.soaresalex.ktunes.data.service.PlayQueueService
 import com.soaresalex.ktunes.data.service.PlaybackService
 import com.soaresalex.ktunes.ui.navigation.History
 import kotlinx.coroutines.flow.*
@@ -16,7 +17,8 @@ class LibraryScreenModel(
 	val settings: Settings,
 	val history: History,
 	private val libraryRepository: LibraryRepository,
-	private val playbackService: PlaybackService
+	private val playbackService: PlaybackService,
+	private val playQueueService: PlayQueueService
 ) : ScreenModel {
 	// Sorting and filtering enums
 	enum class SortOrder { ASCENDING, DESCENDING }
@@ -169,19 +171,26 @@ class LibraryScreenModel(
 		}
 	}
 
-	fun onPlayTrack(track: Track) {
-		executePlaybackAction { play(track) }
+	fun onLibraryTrackClick(clicked: Track) {
+		val tracks = libraryRepository.tracks.value
+		val index = tracks.indexOf(clicked)
+
+		if (index == -1) {
+			throw IllegalArgumentException("Track not found in library")
+		}
+
+		executePlaybackAction { playFromTrackList(tracks, index) }
 	}
 
-	fun onPauseTrack() {
+	fun onPause() {
 		executePlaybackAction { pause() }
 	}
 
-	fun onResumeTrack() {
+	fun onResume() {
 		executePlaybackAction { resume() }
 	}
 
-	fun onStopPlayback() {
+	fun onStop() {
 		executePlaybackAction { stop() }
 	}
 }
