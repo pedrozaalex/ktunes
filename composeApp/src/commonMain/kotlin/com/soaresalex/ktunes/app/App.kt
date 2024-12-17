@@ -40,37 +40,6 @@ import compose.icons.feathericons.Users
 import org.koin.compose.koinInject
 
 @Composable
-fun TitleBar() = Row(
-	Modifier.height(48.dp).fillMaxWidth().padding(horizontal = 8.dp),
-	Arrangement.SpaceBetween,
-	Alignment.CenterVertically
-) {
-	Row {
-		NavigationControls()
-	}
-
-	PlaybackControls()
-
-	Row(verticalAlignment = Alignment.CenterVertically) {
-		SettingsButton()
-		Spacer(Modifier.width(8.dp))
-		CloseButton()
-	}
-}
-
-val sidebarItemData = listOf(
-	SidebarItemData(
-		"Tracks", FeatherIcons.Music, TracksScreen
-	),
-	SidebarItemData(
-		"Albums", FeatherIcons.Disc, AlbumsScreen
-	),
-	SidebarItemData(
-		"Artists", FeatherIcons.Users, ArtistsScreen
-	),
-)
-
-@Composable
 fun App(
 	titlebarContainer: @Composable (content: @Composable () -> Unit) -> Unit = { },
 ) = AppTheme {
@@ -92,17 +61,13 @@ fun App(
 			LaunchedEffect(nav) { history.init(nav) }
 
 			Row(Modifier.fillMaxSize().padding(4.dp)) {
-				Sidebar(
-					width = sidebarWidth.dp,
-					items = sidebarItemData,
-				)
+				Sidebar(sidebarWidth.dp, sidebarItemData)
 
 				Box(
-					Modifier.draggable(
-						orientation = Orientation.Horizontal, state = rememberDraggableState { delta ->
-							sidebarWidth += delta.toInt()
-						}).pointerHoverIcon(PointerIcon.Hand).width(8.dp).fillMaxHeight()
-				)
+					Modifier.width(8.dp).fillMaxHeight()
+						.draggable(rememberDraggableState { sidebarWidth += it.toInt() }, Orientation.Horizontal)
+						.pointerHoverIcon(PointerIcon.Hand)
+				) { }
 
 				Box(
 					Modifier.fillMaxSize().background(
@@ -115,9 +80,40 @@ fun App(
 	}
 }
 
+@Composable
+fun TitleBar() = Row(
+	Modifier.height(48.dp).fillMaxWidth().padding(horizontal = 8.dp),
+	Arrangement.SpaceBetween,
+	Alignment.CenterVertically
+) {
+	Row {
+		NavigationControls()
+	}
+
+	PlaybackControls()
+
+	Row(verticalAlignment = Alignment.CenterVertically) {
+		SettingsButton()
+		Spacer(Modifier.width(8.dp))
+		CloseButton()
+	}
+}
+
 
 data class SidebarItemData(
 	val title: String, val icon: ImageVector, val screen: Screen
+)
+
+val sidebarItemData = listOf(
+	SidebarItemData(
+		"Tracks", FeatherIcons.Music, TracksScreen
+	),
+	SidebarItemData(
+		"Albums", FeatherIcons.Disc, AlbumsScreen
+	),
+	SidebarItemData(
+		"Artists", FeatherIcons.Users, ArtistsScreen
+	),
 )
 
 @Composable

@@ -69,7 +69,7 @@ class GstreamerPlaybackService : PlaybackService {
 					// For now, we just emit a random float between 0 and 1
 					_audioLevel.value = Math.random().toFloat()
 				}
-				delay(250)
+				delay(100)
 			}
 		}
 	}
@@ -118,6 +118,7 @@ class GstreamerPlaybackService : PlaybackService {
 	override suspend fun seekTo(position: Long) = withContext(coroutineContext) {
 		if (playbin.state == State.PLAYING || playbin.state == State.PAUSED) {
 			playbin.seek(ClockTime.fromMillis(position))
+			_progress.value = position
 		}
 	}
 

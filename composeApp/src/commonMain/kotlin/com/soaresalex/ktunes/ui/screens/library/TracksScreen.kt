@@ -7,6 +7,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
@@ -19,13 +20,41 @@ import com.soaresalex.ktunes.data.models.Track
 import com.soaresalex.ktunes.screenmodels.LibraryScreenModel
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Music
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 
 object TracksScreen : LibraryScreen<Track>() {
+	override fun getSortOptions(): List<String> = listOf("Title", "Artist", "Album", "Duration")
+
+
+	override fun updateSort(
+		screenModel: LibraryScreenModel, sortOption: String, isAscending: Boolean
+	) {
+		val sortBy = when(sortOption) {
+			"Title" -> LibraryScreenModel.TrackSortBy.TITLE
+			"Artist" -> LibraryScreenModel.TrackSortBy.ARTIST
+			"Album" -> LibraryScreenModel.TrackSortBy.ALBUM
+			"Duration" -> LibraryScreenModel.TrackSortBy.DURATION
+			else -> LibraryScreenModel.TrackSortBy.TITLE
+		}
+		val sortOrder = if (isAscending)
+			LibraryScreenModel.SortOrder.ASCENDING
+		else
+			LibraryScreenModel.SortOrder.DESCENDING
+
+		screenModel.updateTrackSort(sortBy, sortOrder)
+	}
+
+	override fun updateFilter(
+		screenModel: LibraryScreenModel, filterQuery: String
+	) {
+		screenModel.setTrackNameFilter(filterQuery)
+	}
+
 	override fun getScreenTitle() = "Tracks"
 
-	override val getItems: LibraryScreenModel.() -> StateFlow<List<Track>>
-		get() = { repo.tracks }
+	override fun getItems(model: LibraryScreenModel): Flow<List<Track>> {
+		return model.filteredTracks
+	}
 
 
 	@Composable
@@ -116,7 +145,7 @@ object TracksScreen : LibraryScreen<Track>() {
 				AsyncImage(
 					url,
 					contentDescription,
-					Modifier.size(size),
+					Modifier.size(size).clip(shape),
 					contentScale = ContentScale.Crop,
 					placeholder = rememberVectorPainter(FeatherIcons.Music),
 					fallback = rememberVectorPainter(FeatherIcons.Music),

@@ -25,16 +25,13 @@ fun main() = application {
 		transparent = true,
 	) {
 		window.minimumSize = Dimension(
-			350, 600
+			700, 600
 		)
 
 		Surface(
-			modifier = Modifier
-				.fillMaxSize()
-				.padding(5.dp)
-				.shadow(
-					3.dp, RoundedCornerShape(8.dp)
-				), shape = RoundedCornerShape(8.dp), color = Color.Transparent
+			modifier = Modifier.fillMaxSize().padding(5.dp).shadow(
+				3.dp, RoundedCornerShape(8.dp)
+			), shape = RoundedCornerShape(8.dp), color = Color.Transparent
 		) {
 			App(titlebarContainer = { WindowDraggableArea { it() } })
 		}

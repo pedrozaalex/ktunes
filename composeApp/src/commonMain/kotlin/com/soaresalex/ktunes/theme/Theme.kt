@@ -1,6 +1,5 @@
 package com.soaresalex.ktunes.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.darkColorScheme
@@ -89,7 +88,9 @@ internal val LocalThemeIsDark = compositionLocalOf { mutableStateOf(true) }
 internal fun AppTheme(
 	content: @Composable () -> Unit
 ) {
-	val systemIsDark = isSystemInDarkTheme()
+	val systemIsDark =
+//		isSystemInDarkTheme()
+		true
 	val isDarkState = remember(systemIsDark) { mutableStateOf(systemIsDark) }
 	CompositionLocalProvider(
 		LocalThemeIsDark provides isDarkState

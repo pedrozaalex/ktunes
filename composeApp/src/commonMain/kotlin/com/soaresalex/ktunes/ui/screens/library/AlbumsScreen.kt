@@ -3,13 +3,34 @@ package com.soaresalex.ktunes.ui.screens.library
 import androidx.compose.runtime.Composable
 import com.soaresalex.ktunes.data.models.Album
 import com.soaresalex.ktunes.screenmodels.LibraryScreenModel
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 
 object AlbumsScreen : LibraryScreen<Album>() {
+	override fun getSortOptions(): List<String> {
+//		TODO("Not yet implemented")
+		return emptyList()
+	}
+
+	override fun updateSort(
+		screenModel: LibraryScreenModel,
+		sortOption: String,
+		isAscending: Boolean
+	) {
+//		TODO("Not yet implemented")
+	}
+
+	override fun updateFilter(
+		screenModel: LibraryScreenModel,
+		filterQuery: String
+	) {
+//		TODO("Not yet implemented")
+	}
+
 	override fun getScreenTitle() = "Albums"
 
-	override val getItems: LibraryScreenModel.() -> StateFlow<List<Album>>
-		get() = { repo.albums }
+	override fun getItems(model: LibraryScreenModel): Flow<List<Album>> {
+		return model.filteredAlbums
+	}
 
 	@Composable
 	override fun GridItemView(item: Album) {

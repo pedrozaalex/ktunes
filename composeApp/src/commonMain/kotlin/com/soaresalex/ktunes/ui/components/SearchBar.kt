@@ -46,8 +46,8 @@ fun SearchBar(
 	placeholder: String = "Search...",
 	maxLines: Int = 1,
 	textStyle: TextStyle = MaterialTheme.typography.bodyMedium,
-	backgroundColor: Color = MaterialTheme.colorScheme.surfaceVariant,
-	contentColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+	backgroundColor: Color = MaterialTheme.colorScheme.surfaceContainer,
+	contentColor: Color = MaterialTheme.colorScheme.onSurface,
 ) {
 	var isFocused by remember { mutableStateOf(false) }
 	val focusRequester = remember { FocusRequester() }

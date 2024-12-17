@@ -30,16 +30,14 @@ import kotlinx.coroutines.launch
  * @param currentProgress Current playback progress in milliseconds
  * @param track
  * @param onSeek Callback when user seeks to a new position
- * @param isPlaying Whether the track is currently playing
  * @param scope CoroutineScope for handling asynchronous seek operations
  * @param useRemainingTime Flag to toggle between elapsed and remaining time display
  */
 @Composable
 fun SeekBar(
 	currentProgress: Long,
-	track: Track?,
+	track: Track,
 	onSeek: (Long) -> Unit,
-	isPlaying: Boolean,
 	scope: CoroutineScope = rememberCoroutineScope(),
 	modifier: Modifier = Modifier,
 	barHeight: Dp = 9.dp,
@@ -55,7 +53,7 @@ fun SeekBar(
 	val interactionSource = remember { MutableInteractionSource() }
 	val isHovered by interactionSource.collectIsHoveredAsState()
 
-	val totalDuration = remember { track?.duration ?: 0 }
+	val totalDuration = remember { track.duration }
 
 	val animatedProgressFraction by animateFloatAsState(
 		targetValue = if (totalDuration > 0) currentProgress.toFloat() / totalDuration else 0f,
@@ -107,13 +105,13 @@ fun SeekBar(
 							}
 
 							// Handle seeking
-							if (event.type.toString() == "Press" && isPlaying) {
+							if (event.type.toString() == "Press") {
 								isSeeking = true
 								seekPosition = fraction * totalDuration
 							}
 
 							// Handle drag
-							if (event.type.toString() == "Move" && isSeeking && isPlaying) {
+							if (event.type.toString() == "Move" && isSeeking) {
 								val dragAmount = pointerInput.positionChange().x / density
 								val dragFraction = dragAmount / size.width
 

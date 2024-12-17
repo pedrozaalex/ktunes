@@ -44,6 +44,7 @@ kotlin {
 			implementation("net.java.dev.jna:jna:5.10.0")
 			implementation("net.java.dev.jna:jna-platform:5.10.0")
 			implementation("org.freedesktop.gstreamer:gst1-java-core:1.4.0")
+			implementation("androidx.palette:palette:1.0.0")
 		}
 
 		commonTest.dependencies {
