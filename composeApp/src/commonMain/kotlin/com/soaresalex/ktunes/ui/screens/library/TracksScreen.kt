@@ -17,10 +17,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.soaresalex.ktunes.data.models.Track
-import com.soaresalex.ktunes.interfaces.SortOrder
 import com.soaresalex.ktunes.screenmodels.LibraryScreenModel
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Music
+import javax.swing.SortOrder
 
 object TracksScreen : LibraryScreen<Track>() {
 	override fun getSortOptions(): List<String> = listOf("Title", "Artist", "Album", "Duration")

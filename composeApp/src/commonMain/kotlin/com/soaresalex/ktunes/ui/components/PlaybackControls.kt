@@ -3,6 +3,8 @@ package com.soaresalex.ktunes.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -72,7 +74,7 @@ fun PlaybackControls() {
 
 					when {
 						isPlaying -> Triple(handlePause, FeatherIcons.Pause, "Pause")
-						else -> Triple(handlePlay, FeatherIcons.Play, "Play")
+						else -> Triple(handlePlay, Icons.Filled.PlayArrow, "Play")
 					}.let { (onClick, icon, desc) ->
 						FilledIconButton(onClick) { Icon(icon, desc) }
 					}

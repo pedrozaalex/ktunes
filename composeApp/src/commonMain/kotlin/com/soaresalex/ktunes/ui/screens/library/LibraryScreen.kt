@@ -1,5 +1,7 @@
 package com.soaresalex.ktunes.ui.screens.library
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -46,9 +48,9 @@ abstract class LibraryScreen<T> : Screen {
 		Column(modifier = Modifier.fillMaxSize()) {
 			// Enhanced Title Bar with Filtering and Sorting
 			ElevatedCard(
-				modifier = Modifier.fillMaxWidth().padding(8.dp),
+				modifier = Modifier.fillMaxWidth(),
 				shape = RoundedCornerShape(8.dp),
-				elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+				elevation = CardDefaults.elevatedCardElevation(defaultElevation = 8.dp)
 			) {
 				Column(
 					modifier = Modifier.padding(16.dp)
@@ -66,6 +68,18 @@ abstract class LibraryScreen<T> : Screen {
 						)
 
 						Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+							// Filter Button
+							OutlinedButton(
+								onClick = { isFilterExpanded = !isFilterExpanded },
+								modifier = Modifier.height(30.dp),
+								contentPadding = ButtonDefaults.TextButtonWithIconContentPadding
+							) {
+								Icon(
+									imageVector = FeatherIcons.Search,
+									contentDescription = "Filter",
+								)
+							}
+
 							OutlinedButton(
 								onClick = { isSortExpanded = !isSortExpanded },
 								modifier = Modifier.height(30.dp),
@@ -87,16 +101,19 @@ abstract class LibraryScreen<T> : Screen {
 										updateSort(screenModel, option, isSortAscending)
 									})
 								}
-								HorizontalDivider()
-								DropdownMenuItem(text = {
-									Text(if (isSortAscending) "Descending" else "Ascending")
-								}, onClick = {
-									isSortAscending = !isSortAscending
-									isSortExpanded = false
-									selectedSortOption?.let {
-										updateSort(screenModel, it, isSortAscending)
-									}
-								})
+							}
+
+							// Separate button for sorting order
+							IconButton(onClick = {
+								isSortAscending = !isSortAscending
+								selectedSortOption?.let {
+									updateSort(screenModel, it, isSortAscending)
+								}
+							}, Modifier.size(30.dp)) {
+								Icon(
+									imageVector = if (isSortAscending) FeatherIcons.ArrowUp else FeatherIcons.ArrowDown,
+									contentDescription = if (isSortAscending) "Ascending" else "Descending"
+								)
 							}
 
 							SingleChoiceSegmentedButtonRow(
@@ -125,34 +142,46 @@ abstract class LibraryScreen<T> : Screen {
 					}
 
 					// Filter UI
-					Spacer(modifier = Modifier.height(8.dp))
-					OutlinedTextField(
-						value = filterText,
-						onValueChange = {
-							filterText = it
-							updateFilter(screenModel, it)
-						},
-						modifier = Modifier.fillMaxWidth(),
-						placeholder = { Text("Search ${getScreenTitle()}") },
-						leadingIcon = {
-							Icon(
-								imageVector = FeatherIcons.Search, contentDescription = "Search"
-							)
-						},
-						trailingIcon = {
-							if (filterText.isNotEmpty()) {
-								IconButton(onClick = {
-									filterText = ""
-									updateFilter(screenModel, "")
-								}) {
+					AnimatedVisibility(
+						visible = isFilterExpanded,
+						enter = expandVertically(animationSpec = tween(durationMillis = 300)) + fadeIn(
+							animationSpec = tween(durationMillis = 300)
+						),
+						exit = shrinkVertically(animationSpec = tween(durationMillis = 300)) + fadeOut(
+							animationSpec = tween(durationMillis = 300)
+						)
+					) {
+						Column {
+							Spacer(modifier = Modifier.height(8.dp))
+							OutlinedTextField(
+								value = filterText,
+								onValueChange = {
+									filterText = it
+									updateFilter(screenModel, it)
+								},
+								modifier = Modifier.fillMaxWidth(),
+								placeholder = { Text("Search ${getScreenTitle()}") },
+								leadingIcon = {
 									Icon(
-										imageVector = FeatherIcons.XCircle, contentDescription = "Clear"
+										imageVector = FeatherIcons.Search, contentDescription = "Search"
 									)
-								}
-							}
-						},
-						shape = RoundedCornerShape(8.dp)
-					)
+								},
+								trailingIcon = {
+									if (filterText.isNotEmpty()) {
+										IconButton(onClick = {
+											filterText = ""
+											updateFilter(screenModel, "")
+										}) {
+											Icon(
+												imageVector = FeatherIcons.XCircle, contentDescription = "Clear"
+											)
+										}
+									}
+								},
+								shape = RoundedCornerShape(8.dp)
+							)
+						}
+					}
 				}
 			}
 

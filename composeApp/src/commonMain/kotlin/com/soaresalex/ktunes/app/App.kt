@@ -6,11 +6,9 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,19 +59,49 @@ fun App(
 			LaunchedEffect(nav) { history.init(nav) }
 
 			Row(Modifier.fillMaxSize().padding(4.dp)) {
-				Sidebar(sidebarWidth.dp, sidebarItemData)
+				PermanentNavigationDrawer(
+					drawerContent = {
+						PermanentDrawerSheet(Modifier.width(sidebarWidth.dp)) {
+							Column(Modifier.verticalScroll(rememberScrollState())) {
+								SearchBar(
+									modifier = Modifier.fillMaxWidth(), placeholder = "Search Library"
+								)
 
-				Box(
-					Modifier.width(8.dp).fillMaxHeight()
-						.draggable(rememberDraggableState { sidebarWidth += it.toInt() }, Orientation.Horizontal)
-						.pointerHoverIcon(PointerIcon.Hand)
-				) { }
+								Spacer(modifier = Modifier.height(16.dp))
 
-				Box(
-					Modifier.fillMaxSize().background(
-						MaterialTheme.colorScheme.surfaceContainer, MaterialTheme.shapes.medium
-					).clip(MaterialTheme.shapes.medium)
-				) { CurrentScreen() }
+								Text(
+									text = "LIBRARY",
+									fontWeight = FontWeight.Bold,
+									color = MaterialTheme.colorScheme.onSurfaceVariant
+								)
+
+								Spacer(modifier = Modifier.height(8.dp))
+
+								sidebarItemData.forEach {
+									NavigationDrawerItem(
+										icon = { Icon(it.icon, it.title) },
+										label = { Text(it.title) },
+										selected = history.currentScreen.collectAsState().value == it.screen,
+										onClick = { history.navigateTo(it.screen) }
+									)
+								}
+							}
+						}
+					}) {
+					Row {
+						Box(
+							Modifier.width(8.dp).fillMaxHeight().draggable(
+									rememberDraggableState { sidebarWidth += it.toInt() }, Orientation.Horizontal
+								).pointerHoverIcon(PointerIcon.Hand)
+						) { }
+
+						Box(
+							Modifier.fillMaxSize().background(
+								MaterialTheme.colorScheme.surfaceContainer, MaterialTheme.shapes.medium
+							).clip(MaterialTheme.shapes.medium)
+						) { CurrentScreen() }
+					}
+				}
 			}
 		}
 
@@ -120,25 +148,27 @@ val sidebarItemData = listOf(
 fun Sidebar(
 	width: Dp, items: List<SidebarItemData>
 ) {
-	Column(
-		Modifier.fillMaxHeight().width(width)
-	) {
-		SearchBar(
-			modifier = Modifier.fillMaxWidth(), placeholder = "Search Library"
-		)
+//	Column(
+//		Modifier.fillMaxHeight().width(width)
+//	) {
+//		SearchBar(
+//			modifier = Modifier.fillMaxWidth(), placeholder = "Search Library"
+//		)
+//
+//		Spacer(modifier = Modifier.height(16.dp))
+//
+//		Text(
+//			text = "LIBRARY", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant
+//		)
+//
+//		Spacer(modifier = Modifier.height(8.dp))
+//
+//		LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+//			items(items) { SidebarItem(it) }
+//		}
+//	}
 
-		Spacer(modifier = Modifier.height(16.dp))
 
-		Text(
-			text = "LIBRARY", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant
-		)
-
-		Spacer(modifier = Modifier.height(8.dp))
-
-		LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-			items(items) { SidebarItem(it) }
-		}
-	}
 }
 
 @Composable

@@ -1,6 +1,7 @@
 package com.soaresalex.ktunes.ui.components
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -57,7 +58,7 @@ fun SeekBar(
 
 	val animatedProgressFraction by animateFloatAsState(
 		targetValue = if (totalDuration > 0) currentProgress.toFloat() / totalDuration else 0f,
-		label = "Progress Animation"
+		label = "Progress Animation", animationSpec = tween(100)
 	)
 
 	val progressFraction = if (totalDuration > 0) {

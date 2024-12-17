@@ -9,14 +9,12 @@ import com.soaresalex.ktunes.data.models.Track
 import com.soaresalex.ktunes.data.repository.LibraryRepository
 import com.soaresalex.ktunes.data.service.PlayQueueService
 import com.soaresalex.ktunes.data.service.PlaybackService
-import com.soaresalex.ktunes.interfaces.SortOrder
-import com.soaresalex.ktunes.interfaces.filterItems
-import com.soaresalex.ktunes.interfaces.sortItems
 import com.soaresalex.ktunes.ui.navigation.History
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.text.Collator
 import java.util.*
+import javax.swing.SortOrder
 
 class LibraryScreenModel(
 	val settings: Settings,
@@ -58,22 +56,30 @@ class LibraryScreenModel(
 	val artistSortBy: StateFlow<ArtistSortBy> = _artistSortBy.asStateFlow()
 	val artistSortOrder: StateFlow<SortOrder> = _artistSortOrder.asStateFlow()
 
-	val filteredSortedTracks = combine(
-		libraryRepository.tracks, _trackNameFilter, trackSortBy, trackSortOrder
-	) { tracks, filter, sortBy, sortOrder ->
-		tracks.filterItems(filter).sortItems(sortBy.toString(), sortOrder)
+	val filteredSortedTracks = libraryRepository.tracks.combine(_trackNameFilter) { tracks, filter ->
+		filter?.let {
+			tracks.filter { it.title.contains(filter, ignoreCase = true) }
+		} ?: tracks
+	}.let {
+		combine(it, _trackSortBy, _trackSortOrder) { tracks, sortBy, sortOrder ->
+			sortTracks(tracks, sortBy, sortOrder)
+		}
 	}
 
-	val filteredSortedAlbums = combine(
-		libraryRepository.albums, _albumNameFilter, albumSortBy, albumSortOrder
-	) { albums, filter, sortBy, sortOrder ->
-		albums.filterItems(filter).sortItems(sortBy.toString(), sortOrder)
+	val filteredSortedAlbums = libraryRepository.albums.combine(_albumNameFilter) { albums, filter ->
+		filter?.let {
+			albums.filter { it.title.contains(filter, ignoreCase = true) }
+		} ?: albums
+	}.map { albums ->
+		sortAlbums(albums, _albumSortBy.value, _albumSortOrder.value)
 	}
 
-	val filteredSortedArtists = combine(
-		libraryRepository.artists, _artistNameFilter, artistSortBy, artistSortOrder
-	) { artists, filter, sortBy, sortOrder ->
-		artists.filterItems(filter).sortItems(sortBy.toString(), sortOrder)
+	val filteredSortedArtists = libraryRepository.artists.combine(_artistNameFilter) { artists, filter ->
+		filter?.let {
+			artists.filter { it.name.contains(filter, ignoreCase = true) }
+		} ?: artists
+	}.map { artists ->
+		sortArtists(artists, _artistSortBy.value, _artistSortOrder.value)
 	}
 
 	private val _isLoading = MutableStateFlow(false)
