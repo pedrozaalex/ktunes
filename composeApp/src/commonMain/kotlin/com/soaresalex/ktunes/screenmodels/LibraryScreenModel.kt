@@ -173,28 +173,25 @@ class LibraryScreenModel(
 		_artistNameFilter.value = filter
 	}
 
-	// Existing playback methods
-	fun onPlayTrack(track: Track) {
+	private fun executePlaybackAction(action: suspend PlaybackService.() -> Unit) {
 		screenModelScope.launch {
-			playbackService.play(track)
+			playbackService.action()
 		}
+	}
+
+	fun onPlayTrack(track: Track) {
+		executePlaybackAction { play(track) }
 	}
 
 	fun onPauseTrack() {
-		screenModelScope.launch {
-			playbackService.pause()
-		}
+		executePlaybackAction { pause() }
 	}
 
 	fun onResumeTrack() {
-		screenModelScope.launch {
-			playbackService.resume()
-		}
+		executePlaybackAction { resume() }
 	}
 
 	fun onStopPlayback() {
-		screenModelScope.launch {
-			playbackService.stop()
-		}
+		executePlaybackAction { stop() }
 	}
 }

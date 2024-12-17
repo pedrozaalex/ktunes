@@ -29,17 +29,15 @@ object TracksScreen : LibraryScreen<Track>() {
 	override fun updateSort(
 		screenModel: LibraryScreenModel, sortOption: String, isAscending: Boolean
 	) {
-		val sortBy = when(sortOption) {
+		val sortBy = when (sortOption) {
 			"Title" -> LibraryScreenModel.TrackSortBy.TITLE
 			"Artist" -> LibraryScreenModel.TrackSortBy.ARTIST
 			"Album" -> LibraryScreenModel.TrackSortBy.ALBUM
 			"Duration" -> LibraryScreenModel.TrackSortBy.DURATION
 			else -> LibraryScreenModel.TrackSortBy.TITLE
 		}
-		val sortOrder = if (isAscending)
-			LibraryScreenModel.SortOrder.ASCENDING
-		else
-			LibraryScreenModel.SortOrder.DESCENDING
+		val sortOrder = if (isAscending) LibraryScreenModel.SortOrder.ASCENDING
+		else LibraryScreenModel.SortOrder.DESCENDING
 
 		screenModel.updateTrackSort(sortBy, sortOrder)
 	}
@@ -55,7 +53,6 @@ object TracksScreen : LibraryScreen<Track>() {
 	override fun getItems(model: LibraryScreenModel): Flow<List<Track>> {
 		return model.filteredTracks
 	}
-
 
 	@Composable
 	override fun GridItemView(item: Track) {
