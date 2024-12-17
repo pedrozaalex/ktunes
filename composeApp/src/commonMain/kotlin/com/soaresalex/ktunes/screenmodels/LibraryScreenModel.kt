@@ -9,11 +9,7 @@ import com.soaresalex.ktunes.data.models.Track
 import com.soaresalex.ktunes.data.repository.LibraryRepository
 import com.soaresalex.ktunes.data.service.PlaybackService
 import com.soaresalex.ktunes.ui.navigation.History
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class LibraryScreenModel(
@@ -108,9 +104,7 @@ class LibraryScreenModel(
 
 	// Sorting helper methods
 	private fun sortTracks(
-		tracks: List<Track>,
-		sortBy: TrackSortBy,
-		sortOrder: SortOrder
+		tracks: List<Track>, sortBy: TrackSortBy, sortOrder: SortOrder
 	): List<Track> = when (sortBy) {
 		TrackSortBy.TITLE -> tracks.sortedBy { it.title }
 		TrackSortBy.ARTIST -> tracks.sortedBy { it.artist }
@@ -121,9 +115,7 @@ class LibraryScreenModel(
 	}
 
 	private fun sortAlbums(
-		albums: List<Album>,
-		sortBy: AlbumSortBy,
-		sortOrder: SortOrder
+		albums: List<Album>, sortBy: AlbumSortBy, sortOrder: SortOrder
 	): List<Album> = when (sortBy) {
 		AlbumSortBy.TITLE -> albums.sortedBy { it.title }
 		AlbumSortBy.ARTIST -> albums.sortedBy { it.artist }
@@ -134,9 +126,7 @@ class LibraryScreenModel(
 	}
 
 	private fun sortArtists(
-		artists: List<Artist>,
-		sortBy: ArtistSortBy,
-		sortOrder: SortOrder
+		artists: List<Artist>, sortBy: ArtistSortBy, sortOrder: SortOrder
 	): List<Artist> = when (sortBy) {
 		ArtistSortBy.NAME -> artists.sortedBy { it.name }
 		ArtistSortBy.TRACK_COUNT -> artists.sortedBy { it.trackCount }
